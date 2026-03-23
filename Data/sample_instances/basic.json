@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "bin": { "W": 1200, "H": 800, "g": 5 },
+  "items": [
+    { "id": 0, "w": 300, "h": 200, "q": 3, "rotation": true },
+    { "id": 1, "w": 150, "h": 100, "q": 5, "rotation": false }
+  ]
+}
