@@ -1,0 +1,76 @@
+---
+description: Enforce photo-matched PyQt visual standards for panels (boxes) and buttons
+globs: App/**/*.py
+alwaysApply: false
+---
+
+# PyQt Panel + Button Visual Standards (Photo-Derived)
+
+## Atmosphere (Must Match)
+- Visual tone must be calm, premium, architectural, and data-focused; avoid playful or saturated UI.
+- Keep high clarity with soft surfaces, thin separators, and restrained green accent.
+- Use mostly neutral grays + warm white base; accents are sparse and purposeful.
+
+## Core Color Tokens (Exact Hex)
+- `BG_APP = #EDEFF2` (window background outside main shell)
+- `BG_SHELL = #F6F7F4` (main app container)
+- `BG_PANEL = #FBFBF9` (card/box widgets)
+- `BG_PANEL_SUBTLE = #F2F3EF` (nested box sections)
+- `BORDER_SOFT = #DADDD6` (default panel stroke)
+- `BORDER_STRONG = #C8CCC4` (active/selected panel stroke)
+- `TEXT_PRIMARY = #161A16`
+- `TEXT_SECONDARY = #62685F`
+- `TEXT_MUTED = #8B9088`
+- `ACCENT_GREEN = #CFE5B8` (progress/focus accent)
+- `ACCENT_GREEN_DARK = #9CB77E` (active accent edge)
+- `BTN_DARK_TOP = #2E3130` and `BTN_DARK_BOTTOM = #1E201F` (primary CTA gradient)
+
+## Panel / Box Widget Rules (`QFrame`, `QGroupBox`, container widgets)
+- Border radius must be `14px` for primary cards, `10px` for nested cards.
+- Border width must be `1px`; never remove border on light cards.
+- Default panel style:
+  - background: `BG_PANEL`
+  - border: `1px solid BORDER_SOFT`
+- Selected/focused panel style:
+  - background: `BG_PANEL`
+  - border: `1px solid BORDER_STRONG`
+- Internal padding for panel content must be `16px` (primary) or `12px` (nested).
+- Horizontal gap between sibling panels must be `12px`; vertical gap `10px`.
+- Do not use saturated shadows. If shadow is used, only `rgba(0,0,0,0.08)` blur <= `16`.
+
+## Button Rules (`QPushButton`)
+- Button height must be `36px` minimum for secondary actions, `40px` for primary CTA.
+- Border radius must be `9px` (secondary) or `10px` (primary).
+- Text must be semibold (weight `600`) and centered.
+
+- Primary CTA (`Run`, `View`, `Start`):
+  - background: vertical gradient `BTN_DARK_TOP -> BTN_DARK_BOTTOM`
+  - text: `#F2F4F1`
+  - border: `1px solid #222524`
+  - hover: increase brightness by ~6% (top `#383C3A`, bottom `#272A29`)
+  - pressed: darken by ~8% (top `#262928`, bottom `#171918`)
+  - disabled: background `#B8BCB6`, text `#ECEEEA`, border `#AEB3AC`
+
+- Secondary / neutral buttons:
+  - background: `#F3F4F1`
+  - text: `TEXT_PRIMARY`
+  - border: `1px solid BORDER_SOFT`
+  - hover: background `#EEF0EB`, border `#C9CDC5`
+  - pressed: background `#E4E7E1`, border `#BCC1B9`
+  - disabled: background `#F0F1EE`, text `#A0A59E`, border `#D8DBD4`
+
+## Typography + Line Rules
+- Use one sans-serif family consistently (`Inter`, `Segoe UI`, or `SF Pro Text` fallback).
+- Page title: `48-56px`, section title: `28-32px`, card title: `16-18px`, body/value: `13-15px`.
+- Separator lines must be `1px` and `#E3E5E0`; avoid heavy dividers.
+
+## Strict Prohibitions
+- No bright blue default Qt focus rings; replace with `ACCENT_GREEN` or subtle gray focus state.
+- No pure white (`#FFFFFF`) for large surfaces except tiny chips/badges.
+- No button colors outside defined tokens for primary/secondary states.
+- No inconsistent radius values outside `10px` and `14px` for panel system.
+
+## Acceptance Checklist
+- Every visible panel matches border, radius, and padding rules.
+- Every button has defined `default + hover + pressed + disabled` style.
+- UI reads as calm premium dashboard, not generic Qt template.

@@ -1,0 +1,43 @@
+---
+description: Technical drawing style rules for bin and item rendering in packing canvas
+alwaysApply: true
+---
+
+# Technical Drawing Visual Rules (Packing Canvas)
+
+## Specialized GUI Area
+- Apply only to the 2D packing visualization surface: `QGraphicsScene` / `QGraphicsView` and related paint or item classes that render the pallet (bin), placed boxes, labels, and dimensions.
+
+## Visual Language
+- The scene must look like a clean architectural/technical drawing: neutral grayscale lines, low-saturation accents, high readability, no playful gradients, no cartoon styling.
+- Use a white or very light gray background (`#FAFAF8` to `#FFFFFF`).
+
+## Stroke Hierarchy (Mandatory)
+- Bin outer boundary: solid stroke `2.0 px`, color `#2F2F2F`.
+- Box outer boundary: solid stroke `1.4 px`, color `#4A4A4A`.
+- Internal dimension lines and extension lines: `0.9 px`, color `#7A7A7A`.
+- Auxiliary grid (if enabled): `0.5 px`, color `#E2E2E2`.
+- Keep this hierarchy strict; never use equal line weight for all elements.
+
+## Dimensioning Rules (Mandatory)
+- Draw dimensions inside each placed box, never outside the box and never across neighboring boxes.
+- Show width and height with orthogonal dimension lines and arrowheads.
+- Use text format `W x H` (example: `1200 x 800`), font size `9-10 px`, color `#555555`.
+- Minimum text padding from box edge: `4 px`.
+- If the box is too small to host readable dimensions, hide dimensions for that box (do not overflow).
+
+## Overlap and Z-Order Rules (Mandatory)
+- Box geometry must never overlap with other boxes; enforce non-overlap in both solver output and render pass.
+- Dimension text or dimension lines must never draw over another box.
+- Use z-order: grid < bin < boxes < dimensions < labels/markers.
+- Before final paint, run collision checks for label bounding rectangles; if collision occurs, reduce detail (hide secondary label) instead of drawing over content.
+
+## Color and Fill Rules
+- Box fill: very light neutral tint (`#F3F3F1` to `#ECECE9`) with opacity `0.85-0.95`.
+- Keep strong contrast between outlines and fills; outlines must remain clearly legible at 100% zoom.
+- Optional placement marker dots may use muted green (`#BFDFAE`) at low opacity only.
+
+## Interaction and Scaling
+- All strokes and text must remain legible between 80% and 200% zoom.
+- Avoid sub-pixel jitter: align key geometry to pixel grid where possible.
+- On resize/zoom, preserve line hierarchy and do not auto-scale line widths into indistinguishable values.

@@ -1,0 +1,49 @@
+---
+description: Mandatory benchmark constraints for 2D single-bin packing app (Python + PyQt5)
+alwaysApply: true
+---
+
+# Benchmark Guardrails (2D Single-Bin Packing)
+
+## Scope
+- Build a production-style desktop app for 2D single-bin packing (one pallet/bin).
+- Prioritize valid, robust, maintainable implementation over theoretical global optimum.
+
+## Technical Baseline
+- Use Python 3.10+ and PyQt5.
+- Keep modular separation: UI layer in `App/`, logic/algorithms in `src/`.
+- Use type annotations and docstrings for non-trivial public functions/classes.
+
+## Packing Logic Requirements
+- Enforce no-overlap placement and keep all placed items inside `W x H`.
+- Enforce minimum inter-item gap `g` (no required gap to pallet border).
+- Support quantities `qi` and optional 90-degree rotation per item type.
+- Validate inputs strictly (reject non-positive sizes and impossible item/bin combinations).
+- If full placement is impossible, return best valid partial solution and report unplaced items by type/count.
+- Optimization priority is lexicographic:
+  1) maximize number of placed pieces,
+  2) then minimize unused area.
+
+## GUI and Runtime Behavior
+- GUI must allow full parameter input for bin and multiple item types.
+- Provide controls: `Run/Start`, `Reset Scene`, `Clear Logger`.
+- Disable run action when inputs are invalid.
+- Visualization must clearly show pallet, placed items, orientation, and unplaced items info.
+- Include a system logger panel with timestamp + level (`INFO/WARN/ERROR`) and key events.
+- Handle errors defensively: never crash on common invalid states; keep app reusable after failures.
+
+## Required Outputs
+- Expose coordinates and orientation for each placed piece.
+- Report placed/unplaced counts, solve time, and area utilization percentage.
+
+## Project and Deliverables
+- Keep repository structure aligned with benchmark:
+  - `App/`, `src/`, `Data/`, `Example/`, `images/`, `Tests/`
+- Include reproducibility scripts:
+  - `install.bat` / `install.sh` for environment setup
+  - `verify.py` for environment and import validation
+- Keep `README.md` professional and in English with architecture, usage, install, algorithms, limits, and GUI screenshot.
+
+## Collaboration Style
+- Prefer small, reviewable changes and mention assumptions explicitly.
+- When requirements are ambiguous, follow benchmark constraints first and document trade-offs.
