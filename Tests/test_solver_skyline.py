@@ -3,6 +3,7 @@ from src.domain.item_type import ItemType
 from src.domain.problem import PackingProblem
 from src.geometry.gap import placement_valid, positive_overlap
 from src.geometry.rect import Rect
+from src.io.json_config import load_problem_from_json_file
 from src.solver.interface import solve
 
 
@@ -54,3 +55,13 @@ def test_partial_unplaced() -> None:
     sol = solve(p)
     assert sol.placed_count == 1
     assert sum(sol.unplaced_by_type.values()) == 1
+
+
+def test_example_02_not_sparse_layout() -> None:
+    """
+    Regression for maxrects candidate generation with g>0.
+    The solver must not get stuck in an overly sparse 4-piece layout.
+    """
+    p = load_problem_from_json_file("Data/example_02.json")
+    sol = solve(p)
+    assert sol.placed_count >= 40

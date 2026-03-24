@@ -65,11 +65,12 @@ python -m App.main
 
 ## Algorithms
 
-- **Heuristic (v1):** bottom-left **skyline** packing with deterministic piece ordering (decreasing max side, then area, then ids).
+- **Heuristic:** bottom-left placement on **maximal free rectangles** (maxrects): free space is tracked as disjoint axis-aligned rectangles; each piece is placed at the bottom-left corner of a free rectangle that fits, then that footprint is subtracted from all free regions. **Several deterministic piece orderings** are evaluated (max side / area / perimeter / aspect variants); the result **lexicographically maximizes** placed count, then minimizes unused bin area, matching the benchmark objective.
+- **Legacy:** `SkylineSolver` remains in `src/solver/skyline.py` for comparison; the app uses `solve()` from `src/solver/interface.py`.
 - **Gap handling:** Euclidean **minimum distance** between item footprints must be ≥ **g**; for **g = 0**, edge/corner contact is allowed but **positive-area overlap** is forbidden.
 - The implementation is **deterministic** (no randomness) for benchmark traceability.
 
-**Limits:** The skyline heuristic does not guarantee a global optimum for the lexicographic objective; it favors robustness and debuggability. A future version may swap in **maximal rectangles** behind the same solver interface.
+**Limits:** Maxrects is still a heuristic; it does not guarantee a global optimum for the lexicographic objective.
 
 ## JSON configuration
 

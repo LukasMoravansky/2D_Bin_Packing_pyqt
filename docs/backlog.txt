@@ -3,3 +3,18 @@ hledání designu
 vybrán design
 9:50 
 Studium Rules, Skills, Subagents v Cursoru
+10:20 
+Subagents:
+Hlavní agent orchestruje, Subagenti běží paralelně.
+Cursor má 3 build in subagenty: Explore (prohledává codebase např), Bash(spouží příkazy v terminálu na pozadí), Browser 
+14:10
+Psaní skillu pro design
+Napsání subagenta pro hodnocení UI a UX (aby byl pouze read only)
+nechal jsem ai agentnta (auto) napsat Rules podle pdf zadání od romana
+rules pro zobrazení boxů (aby vypadali jako výkres)
+rules pro celkový vzhled (poskytl jsem screenshot agentovy aby mi napsal rules (barvym spacing atd)
+
+
+24.03.
+8:20 - oprava solveru agentem - udělal analýzu (chat ask) a následujícím prompt v modu agent opravil chybu (oba dva nastaveni na auto)
+Výhoda Auto (Popsat - žere míň tokenů) 

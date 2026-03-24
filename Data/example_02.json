@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "bin": { "W": 1200, "H": 800, "g": 5 },
+  "items": [
+    { "id": 0, "w": 320, "h": 220, "q": 4, "rotation": true },
+    { "id": 1, "w": 260, "h": 180, "q": 5, "rotation": true },
+    { "id": 2, "w": 200, "h": 140, "q": 7, "rotation": true },
+    { "id": 3, "w": 150, "h": 100, "q": 10, "rotation": false },
+    { "id": 4, "w": 110, "h": 80, "q": 12, "rotation": true },
+    { "id": 5, "w": 90, "h": 60, "q": 14, "rotation": false }
+  ]
+}
