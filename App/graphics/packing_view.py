@@ -10,6 +10,7 @@ class PackingGraphicsView(QGraphicsView):
 
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
+        self._target_rect: QRectF | None = None
         self.setRenderHints(
             QPainter.Antialiasing | QPainter.TextAntialiasing | QPainter.SmoothPixmapTransform
         )
@@ -18,5 +19,17 @@ class PackingGraphicsView(QGraphicsView):
         self.setFrameShape(QGraphicsView.NoFrame)
 
     def fit_bin(self, bin_w: float, bin_h: float) -> None:
+        self._target_rect = QRectF(0, 0, bin_w, bin_h)
+        self._fit_target_rect()
+
+    def resizeEvent(self, event) -> None:  # noqa: N802 (Qt naming)
+        super().resizeEvent(event)
+        self._fit_target_rect()
+
+    def _fit_target_rect(self) -> None:
+        if self._target_rect is None:
+            return
+        if self.viewport().width() <= 0 or self.viewport().height() <= 0:
+            return
         self.resetTransform()
-        self.fitInView(QRectF(0, 0, bin_w, bin_h), Qt.KeepAspectRatio)
+        self.fitInView(self._target_rect, Qt.KeepAspectRatio)

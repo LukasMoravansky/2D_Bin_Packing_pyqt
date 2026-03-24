@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from PyQt5.QtCore import QRectF
 from PyQt5.QtGui import QColor, QPen
 from PyQt5.QtWidgets import QGraphicsScene
 
@@ -16,10 +17,12 @@ class PackingScene(QGraphicsScene):
 
     def clear_scene(self) -> None:
         self.clear()
+        self.setSceneRect(QRectF())
         self._bin_item = None
 
     def draw_solution(self, bin_spec: BinSpec, solution: PackingSolution | None) -> None:
         self.clear()
+        self.setSceneRect(QRectF(0, 0, bin_spec.width, bin_spec.height))
         self._bin_item = BinOutlineItem(bin_spec.width, bin_spec.height)
         self.addItem(self._bin_item)
 
