@@ -18,6 +18,7 @@ class PackingGraphicsView(QGraphicsView):
         self.setDragMode(QGraphicsView.ScrollHandDrag)
         self.setBackgroundBrush(QColor("#ECEEEA"))
         self.setFrameShape(QGraphicsView.NoFrame)
+        self.setMouseTracking(True)
 
     def fit_bin(self, bin_w: float, bin_h: float) -> None:
         self._target_rect = QRectF(0, 0, bin_w, bin_h)

@@ -67,6 +67,8 @@ text primary: #171A1C
 text muted: #5F666D
 border soft: #E2E5E1
 accent green: #BFDFA8
+accent amber: #E0CFA3
+accent red: #E3B6B2
 accent dark: #232629
 ======================================== */
 QWidget {
@@ -107,6 +109,58 @@ QLabel#sectionTitle {
   font-weight: __SECTION_TITLE_WEIGHT__;
   color: #171A1C;
 }
+QWidget#statusBarSurface {
+  background: #FFFFFF;
+  border: 1px solid #E2E5E1;
+  border-radius: 12px;
+}
+QLabel#statusScenario {
+  color: #171A1C;
+  font-weight: 600;
+}
+QLabel#statusTimestamp {
+  color: #5F666D;
+  font-size: 12px;
+}
+QLabel#statusBadgeValid,
+QLabel#statusBadgePartial,
+QLabel#statusBadgeInvalid {
+  min-height: 24px;
+  padding: 0 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+}
+QLabel#statusBadgeValid {
+  background: #E6F0DD;
+  color: #253124;
+  border: 1px solid #C9DDB8;
+}
+QLabel#statusBadgePartial {
+  background: #F2ECE0;
+  color: #4B3D21;
+  border: 1px solid #E0CFAB;
+}
+QLabel#statusBadgeInvalid {
+  background: #F3E7E6;
+  color: #4A2926;
+  border: 1px solid #E2C1BD;
+}
+QWidget#kpiCard {
+  background: #F8F9F6;
+  border: 1px solid #E2E5E1;
+  border-radius: 10px;
+}
+QLabel#kpiTitle {
+  color: #5F666D;
+  font-size: 12px;
+  font-weight: 600;
+}
+QLabel#kpiValue {
+  color: #171A1C;
+  font-size: 20px;
+  font-weight: 700;
+}
 QLabel#metricsLabel {
   font-size: __METRICS_SIZE__;
   font-weight: __METRICS_WEIGHT__;
@@ -125,7 +179,7 @@ QPlainTextEdit#logPlainText {
   font-family: __LOG_FONT_STACK__;
 }
 QDoubleSpinBox, QSpinBox {
-  min-height: 30px;
+  min-height: 34px;
   padding: 2px 10px;
   border: 1px solid #E2E5E1;
   border-radius: 10px;
@@ -141,7 +195,7 @@ QDoubleSpinBox:focus, QSpinBox:focus {
   selection-color: #171A1C;
 }
 QPushButton#btnPrimary {
-  min-height: 40px;
+  min-height: 38px;
   border-radius: 10px;
   font-weight: 600;
   color: #F3F4F1;

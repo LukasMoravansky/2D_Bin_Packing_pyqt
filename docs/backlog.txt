@@ -20,4 +20,8 @@ rules pro celkový vzhled (poskytl jsem screenshot agentovy aby mi napsal rules 
 Výhoda Auto (Popsat - žere míň tokenů) 
 9:00 - fixnuta responzivita palety, která v oneshotu nefungovala (pouze u reset scene)
 
-10:30 uprava vizualu pomocí subagentů
+10:30 uprava vizualu pomocí subagent
+průběžně fixuju vizuální bugy a ptám se ho jako experta (subagenta) co by doporučil, abych se přiblížil co nejvíc předloze
+
+pozn. Navrhované změny napsal expertní sub agent, kterého jsem navrhl(zkopíroval) Já jsem mu jen říkal, aby se nebál ten vizuál posunovat dál.
+

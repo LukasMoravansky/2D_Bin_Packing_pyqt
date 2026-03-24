@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from pathlib import Path
 
 from PyQt5.QtCore import QObject, Qt, pyqtSignal
@@ -45,6 +46,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("2D Single-Bin Packing — Benchmark")
         self._solve_thread: SolveThread | None = None
         self._last_solution: PackingSolution | None = None
+        self._scenario_name = "Manual scenario"
 
         central = QWidget()
         central.setObjectName("appRoot")
@@ -56,6 +58,23 @@ class MainWindow(QMainWindow):
         title = QLabel("2D palletization")
         title.setObjectName("pageTitle")
         outer.addWidget(title)
+
+        self._status_bar = QWidget()
+        self._status_bar.setObjectName("statusBarSurface")
+        status_lay = QHBoxLayout(self._status_bar)
+        status_lay.setContentsMargins(14, 10, 14, 10)
+        status_lay.setSpacing(12)
+        self._scenario_label = QLabel(f"Scenario: {self._scenario_name}")
+        self._scenario_label.setObjectName("statusScenario")
+        self._state_badge = QLabel("INVALID")
+        self._state_badge.setObjectName("statusBadgeInvalid")
+        self._last_run_label = QLabel("Last run: —")
+        self._last_run_label.setObjectName("statusTimestamp")
+        status_lay.addWidget(self._scenario_label)
+        status_lay.addWidget(self._state_badge)
+        status_lay.addStretch(1)
+        status_lay.addWidget(self._last_run_label)
+        outer.addWidget(self._status_bar)
 
         split_v = QSplitter(Qt.Vertical)
         split_h = QSplitter(Qt.Horizontal)
@@ -148,17 +167,10 @@ class MainWindow(QMainWindow):
         btn_row.addWidget(self._btn_save)
         controls_lay.addLayout(btn_row)
 
-        self._metrics = QLabel("—")
-        self._metrics.setObjectName("metricsLabel")
-        self._metrics.setWordWrap(True)
-        self._metrics.setContentsMargins(0, 8, 0, 8)
-        controls_lay.addWidget(self._metrics)
-
         min_controls_h = (
             btn_add_type.sizeHint().height()
             + self._btn_run.minimumHeight()
-            + self._metrics.sizeHint().height()
-            + 52
+            + 42
         )
         controls_section.setMinimumHeight(min_controls_h)
 
@@ -181,9 +193,18 @@ class MainWindow(QMainWindow):
         cv_title = QLabel("Visualization")
         cv_title.setObjectName("cardTitle")
         rl.addWidget(cv_title)
+        self._kpi_row = QHBoxLayout()
+        self._kpi_row.setContentsMargins(0, 0, 0, 0)
+        self._kpi_row.setSpacing(10)
+        self._kpi_util_value = self._create_kpi_card(self._kpi_row, "Utilization", "—")
+        self._kpi_placed_value = self._create_kpi_card(self._kpi_row, "Placed / Unplaced", "—")
+        self._kpi_time_value = self._create_kpi_card(self._kpi_row, "Solve Time", "—")
+        rl.addLayout(self._kpi_row)
         self._scene = PackingScene()
         self._view = PackingGraphicsView()
         self._view.setScene(self._scene)
+        self._scene.box_clicked.connect(self._on_canvas_box_clicked)
+        self._scene.box_hovered.connect(self._on_canvas_box_hovered)
         rl.addWidget(self._view, 1)
 
         split_h.addWidget(left)
@@ -204,6 +225,8 @@ class MainWindow(QMainWindow):
         self._log_emit = _LogEmitter()
         self._log_emit.line.connect(self._log.append_line)
         configure_logging(self._log_emit.line)
+        self._table.selection_changed.connect(self._on_table_selection_changed)
+        self._table.hover_changed.connect(self._on_table_hover_changed)
 
         self._on_inputs_changed()
 
@@ -228,13 +251,14 @@ class MainWindow(QMainWindow):
             vr = validate(p)
         except Exception as e:
             self._btn_run.setEnabled(False)
-            self._metrics.setText(f"Invalid: {e}")
+            self._set_status_state("INVALID")
+            self._set_kpis("—", "—", "—")
             return
         self._btn_run.setEnabled(vr.ok)
         if vr.ok:
-            self._metrics.setText("Inputs valid — press Run to solve.")
+            self._set_status_state("VALID")
         else:
-            self._metrics.setText("Invalid: " + "; ".join(vr.errors))
+            self._set_status_state("INVALID")
 
     def _on_run(self) -> None:
         if self._solve_thread and self._solve_thread.isRunning():
@@ -279,10 +303,15 @@ class MainWindow(QMainWindow):
         if unplaced:
             _LOG.warning("Partial solution: unplaced by type %s", sol.unplaced_by_type)
         unplaced_txt = str(sol.unplaced_by_type) if sol.unplaced_by_type else "{}"
-        self._metrics.setText(
-            f"Placed: {placed}  |  Unplaced: {unplaced} {unplaced_txt}  |  "
-            f"Utilization: {util:.2f}%  |  Time: {sol.solve_time_s:.4f}s"
+        self._set_status_state("PARTIAL" if unplaced else "VALID")
+        self._last_run_label.setText(f"Last run: {datetime.now().strftime('%H:%M:%S')}")
+        self._set_kpis(
+            f"{util:.2f}%",
+            f"{placed} / {unplaced}",
+            f"{sol.solve_time_s:.4f}s",
         )
+        if unplaced_txt != "{}":
+            _LOG.info("Unplaced detail: %s", unplaced_txt)
 
     def _on_solve_err(self, msg: str) -> None:
         _LOG.error("Solve error:\n%s", msg)
@@ -298,7 +327,8 @@ class MainWindow(QMainWindow):
         except Exception:
             self._scene.clear_scene()
         _LOG.info("Scene reset.")
-        self._metrics.setText("Scene cleared.")
+        self._set_kpis("—", "—", "—")
+        self._set_status_state("INVALID")
 
     def _on_load_json(self) -> None:
         path, _ = QFileDialog.getOpenFileName(self, "Load problem JSON", "", "JSON (*.json)")
@@ -307,6 +337,8 @@ class MainWindow(QMainWindow):
         try:
             prob = load_problem_from_json_file(path)
             vr = validate(prob)
+            self._scenario_name = Path(path).name
+            self._scenario_label.setText(f"Scenario: {self._scenario_name}")
             b = prob.bin_spec
             self._spin_w.setValue(b.width)
             self._spin_h.setValue(b.height)
@@ -348,3 +380,50 @@ class MainWindow(QMainWindow):
             return
         split_max = max(260, self.height() - self._LEFT_NON_SPLITTER_RESERVED_HEIGHT)
         self._item_split.setMaximumHeight(split_max)
+
+    def _create_kpi_card(self, row: QHBoxLayout, title: str, value: str) -> QLabel:
+        card = QWidget()
+        card.setObjectName("kpiCard")
+        lay = QVBoxLayout(card)
+        lay.setContentsMargins(12, 10, 12, 10)
+        lay.setSpacing(4)
+        ttl = QLabel(title)
+        ttl.setObjectName("kpiTitle")
+        val = QLabel(value)
+        val.setObjectName("kpiValue")
+        lay.addWidget(ttl)
+        lay.addWidget(val)
+        row.addWidget(card)
+        return val
+
+    def _set_kpis(self, util: str, placed: str, solve_time: str) -> None:
+        self._kpi_util_value.setText(util)
+        self._kpi_placed_value.setText(placed)
+        self._kpi_time_value.setText(solve_time)
+
+    def _set_status_state(self, state: str) -> None:
+        state = state.upper()
+        if state == "VALID":
+            self._state_badge.setObjectName("statusBadgeValid")
+        elif state == "PARTIAL":
+            self._state_badge.setObjectName("statusBadgePartial")
+        else:
+            self._state_badge.setObjectName("statusBadgeInvalid")
+            state = "INVALID"
+        self._state_badge.setText(state)
+        self._state_badge.style().unpolish(self._state_badge)
+        self._state_badge.style().polish(self._state_badge)
+
+    def _on_table_selection_changed(self, type_id: int) -> None:
+        self._scene.highlight_type(type_id, mode="selected")
+
+    def _on_table_hover_changed(self, type_id: int) -> None:
+        self._scene.highlight_type(type_id, mode="hover")
+
+    def _on_canvas_box_clicked(self, type_id: int) -> None:
+        self._table.select_type_id(type_id)
+        self._scene.highlight_type(type_id, mode="selected")
+
+    def _on_canvas_box_hovered(self, _type_id: int) -> None:
+        # Hover highlight is handled directly in scene; signal kept for table sync extension.
+        return

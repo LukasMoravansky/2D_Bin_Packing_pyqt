@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from PyQt5.QtCore import Qt, pyqtSignal
+from PyQt5.QtCore import QEvent, QObject, Qt, pyqtSignal
 from PyQt5.QtWidgets import (
     QAbstractSpinBox,
     QAbstractItemView,
@@ -20,6 +20,8 @@ class BinItemTable(QWidget):
     """Editable table: w, h, q, rotation per row."""
 
     changed = pyqtSignal()
+    selection_changed = pyqtSignal(int)
+    hover_changed = pyqtSignal(int)
     _SPINBOX_V_MARGIN = 4
     _SPINBOX_H_MARGIN = 6
     _ROW_HEIGHT_BUFFER = 2
@@ -49,8 +51,12 @@ class BinItemTable(QWidget):
         self._table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self._table.setSelectionMode(QAbstractItemView.SingleSelection)
         self._table.setAlternatingRowColors(True)
+        self._table.setMouseTracking(True)
         self._table.verticalHeader().setDefaultAlignment(Qt.AlignVCenter | Qt.AlignRight)
         self._table.itemChanged.connect(lambda *_: self.changed.emit())
+        self._table.itemSelectionChanged.connect(self._emit_selection_changed)
+        self._table.cellEntered.connect(self._on_cell_entered)
+        self._table.viewport().installEventFilter(self)
 
         lay = QVBoxLayout(self)
         lay.setContentsMargins(0, 0, 0, 0)
@@ -58,6 +64,11 @@ class BinItemTable(QWidget):
 
         self._apply_minimum_heights()
         self.add_row()
+
+    def eventFilter(self, watched: QObject, event: QEvent) -> bool:
+        if watched is self._table.viewport() and event.type() == QEvent.Leave:
+            self.hover_changed.emit(-1)
+        return super().eventFilter(watched, event)
 
     def add_row(self) -> None:
         r = self._table.rowCount()
@@ -127,12 +138,26 @@ class BinItemTable(QWidget):
             if self._table.rowCount() == 0:
                 self.add_row()
             self.changed.emit()
+            self._emit_selection_changed()
 
     def _apply_minimum_heights(self) -> None:
         header_h = self._table.horizontalHeader().sizeHint().height()
         table_min_h = header_h + self._ROW_HEIGHT + 8
         self._table.setMinimumHeight(table_min_h)
         self.setMinimumHeight(table_min_h)
+
+    def selected_type_id(self) -> int:
+        row = self._table.currentRow()
+        if row < 0:
+            return -1
+        return row
+
+    def select_type_id(self, type_id: int) -> None:
+        if 0 <= type_id < self._table.rowCount():
+            self._table.selectRow(type_id)
+            idx = self._table.model().index(type_id, 0)
+            self._table.scrollTo(idx, QAbstractItemView.PositionAtCenter)
+            self._emit_selection_changed()
 
     def load_items(self, items: list[dict]) -> None:
         while self._table.rowCount():
@@ -152,6 +177,7 @@ class BinItemTable(QWidget):
             q.setValue(int(it["q"]))
             rot.setChecked(bool(it.get("rotation", False)))
         self.changed.emit()
+        self._emit_selection_changed()
 
     def to_items_payload(self) -> list[dict]:
         out: list[dict] = []
@@ -184,3 +210,9 @@ class BinItemTable(QWidget):
         child = wrap.findChild(QCheckBox)
         assert child is not None
         return child
+
+    def _emit_selection_changed(self) -> None:
+        self.selection_changed.emit(self.selected_type_id())
+
+    def _on_cell_entered(self, row: int, _col: int) -> None:
+        self.hover_changed.emit(row)
