@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtWidgets import (
+    QAbstractSpinBox,
     QAbstractItemView,
     QCheckBox,
     QDoubleSpinBox,
@@ -24,8 +25,18 @@ class BinItemTable(QWidget):
         super().__init__(parent)
         self._table = QTableWidget(0, 4)
         self._table.setHorizontalHeaderLabels(["w (mm)", "h (mm)", "qty", "90° rot."])
-        self._table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self._table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
+        self._table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
+        self._table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Fixed)
+        self._table.horizontalHeader().setSectionResizeMode(3, QHeaderView.Fixed)
+        self._table.setColumnWidth(2, 96)
+        self._table.setColumnWidth(3, 110)
+        self._table.verticalHeader().setDefaultSectionSize(42)
         self._table.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self._table.setSelectionMode(QAbstractItemView.SingleSelection)
+        self._table.setAlternatingRowColors(True)
+        self._table.horizontalHeader().setMinimumSectionSize(72)
+        self._table.verticalHeader().setDefaultAlignment(Qt.AlignVCenter | Qt.AlignRight)
         self._table.itemChanged.connect(lambda *_: self.changed.emit())
 
         btn_add = QPushButton("Add type")
@@ -56,19 +67,30 @@ class BinItemTable(QWidget):
                 spin.setRange(0.01, 1e9)
                 spin.setDecimals(2)
                 spin.setValue(float(val))
+                spin.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                spin.setButtonSymbols(QAbstractSpinBox.NoButtons)
+                spin.setKeyboardTracking(False)
                 spin.valueChanged.connect(lambda *_: self.changed.emit())
                 self._table.setCellWidget(r, c, spin)
             elif c == 2:
                 iq = QSpinBox()
                 iq.setRange(0, 1_000_000)
                 iq.setValue(int(val))
+                iq.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                iq.setButtonSymbols(QAbstractSpinBox.NoButtons)
+                iq.setKeyboardTracking(False)
                 iq.valueChanged.connect(lambda *_: self.changed.emit())
                 self._table.setCellWidget(r, c, iq)
             else:
                 cb = QCheckBox()
                 cb.setChecked(bool(val))
                 cb.stateChanged.connect(lambda *_: self.changed.emit())
-                self._table.setCellWidget(r, c, cb)
+                cb_wrap = QWidget()
+                cb_lay = QHBoxLayout(cb_wrap)
+                cb_lay.setContentsMargins(0, 0, 0, 0)
+                cb_lay.setAlignment(Qt.AlignCenter)
+                cb_lay.addWidget(cb)
+                self._table.setCellWidget(r, c, cb_wrap)
         self.changed.emit()
 
     def _remove_row(self) -> None:
