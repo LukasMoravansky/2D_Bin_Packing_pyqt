@@ -13,12 +13,12 @@ class PlacedBoxItem(QGraphicsRectItem):
     def __init__(self, piece: PlacedPiece) -> None:
         super().__init__(QRectF(0, 0, piece.width, piece.height))
         self.setPos(piece.x, piece.y)
-        pen = QPen(QColor("#4A4A4A"))
+        pen = QPen(QColor("#5A5F63"))
         pen.setWidthF(1.4)
         pen.setCosmetic(True)
         self.setPen(pen)
-        c = QColor("#F3F3F1")
-        c.setAlphaF(0.9)
+        c = QColor("#F1F3EE")
+        c.setAlphaF(0.92)
         self.setBrush(QBrush(c))
         self.setZValue(10)
 
@@ -27,8 +27,8 @@ class PlacedBoxItem(QGraphicsRectItem):
         if piece.width >= min_mm and piece.height >= min_mm:
             label = f"{int(piece.width)} x {int(piece.height)}"
             t = QGraphicsSimpleTextItem(label, self)
-            t.setBrush(QColor("#555555"))
-            f = QFont("Segoe UI", 9)
+            t.setBrush(QColor("#444A4F"))
+            f = QFont("Inter", 9)
             t.setFont(f)
             br = t.boundingRect()
             cx = (piece.width - br.width()) / 2

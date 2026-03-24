@@ -27,7 +27,7 @@ class PackingScene(QGraphicsScene):
         self.addItem(self._bin_item)
 
         # Optional grid (very light) — behind bin
-        grid_pen = QPen(QColor("#E2E2E2"))
+        grid_pen = QPen(QColor("#E8EAE6"))
         grid_pen.setWidthF(0.5)
         grid_pen.setCosmetic(True)
         step = max(bin_spec.width, bin_spec.height) / 10.0

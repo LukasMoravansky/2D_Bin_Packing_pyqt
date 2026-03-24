@@ -4,11 +4,11 @@ from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtWidgets import (
     QAbstractSpinBox,
     QAbstractItemView,
+    QAbstractScrollArea,
     QCheckBox,
     QDoubleSpinBox,
     QHBoxLayout,
     QHeaderView,
-    QPushButton,
     QSpinBox,
     QTableWidget,
     QVBoxLayout,
@@ -20,6 +20,9 @@ class BinItemTable(QWidget):
     """Editable table: w, h, q, rotation per row."""
 
     changed = pyqtSignal()
+    _ROW_HEIGHT = 42
+    _QTY_COL_WIDTH = 88
+    _ROT_COL_WIDTH = 112
 
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
@@ -29,33 +32,24 @@ class BinItemTable(QWidget):
         self._table.horizontalHeader().setSectionResizeMode(1, QHeaderView.Stretch)
         self._table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Fixed)
         self._table.horizontalHeader().setSectionResizeMode(3, QHeaderView.Fixed)
-        self._table.setColumnWidth(2, 96)
-        self._table.setColumnWidth(3, 110)
-        self._table.verticalHeader().setDefaultSectionSize(42)
+        self._table.setColumnWidth(2, self._QTY_COL_WIDTH)
+        self._table.setColumnWidth(3, self._ROT_COL_WIDTH)
+        self._table.horizontalHeader().setStretchLastSection(False)
+        self._table.horizontalHeader().setMinimumSectionSize(64)
+        self._table.verticalHeader().setDefaultSectionSize(self._ROW_HEIGHT)
+        self._table.verticalHeader().setMinimumSectionSize(self._ROW_HEIGHT)
+        self._table.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContentsOnFirstShow)
         self._table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self._table.setSelectionMode(QAbstractItemView.SingleSelection)
         self._table.setAlternatingRowColors(True)
-        self._table.horizontalHeader().setMinimumSectionSize(72)
         self._table.verticalHeader().setDefaultAlignment(Qt.AlignVCenter | Qt.AlignRight)
         self._table.itemChanged.connect(lambda *_: self.changed.emit())
-
-        btn_add = QPushButton("Add type")
-        btn_add.setObjectName("btnSecondary")
-        btn_add.clicked.connect(self.add_row)
-        btn_rem = QPushButton("Remove selected")
-        btn_rem.setObjectName("btnSecondary")
-        btn_rem.clicked.connect(self._remove_row)
-
-        row = QHBoxLayout()
-        row.addWidget(btn_add)
-        row.addWidget(btn_rem)
-        row.addStretch(1)
 
         lay = QVBoxLayout(self)
         lay.setContentsMargins(0, 0, 0, 0)
         lay.addWidget(self._table)
-        lay.addLayout(row)
 
+        self._apply_minimum_heights()
         self.add_row()
 
     def add_row(self) -> None:
@@ -71,7 +65,7 @@ class BinItemTable(QWidget):
                 spin.setButtonSymbols(QAbstractSpinBox.NoButtons)
                 spin.setKeyboardTracking(False)
                 spin.valueChanged.connect(lambda *_: self.changed.emit())
-                self._table.setCellWidget(r, c, spin)
+                self._table.setCellWidget(r, c, self._wrap_cell_widget(spin))
             elif c == 2:
                 iq = QSpinBox()
                 iq.setRange(0, 1_000_000)
@@ -80,7 +74,7 @@ class BinItemTable(QWidget):
                 iq.setButtonSymbols(QAbstractSpinBox.NoButtons)
                 iq.setKeyboardTracking(False)
                 iq.valueChanged.connect(lambda *_: self.changed.emit())
-                self._table.setCellWidget(r, c, iq)
+                self._table.setCellWidget(r, c, self._wrap_cell_widget(iq))
             else:
                 cb = QCheckBox()
                 cb.setChecked(bool(val))
@@ -88,18 +82,35 @@ class BinItemTable(QWidget):
                 cb_wrap = QWidget()
                 cb_lay = QHBoxLayout(cb_wrap)
                 cb_lay.setContentsMargins(0, 0, 0, 0)
+                cb_lay.setSpacing(0)
                 cb_lay.setAlignment(Qt.AlignCenter)
                 cb_lay.addWidget(cb)
                 self._table.setCellWidget(r, c, cb_wrap)
         self.changed.emit()
 
-    def _remove_row(self) -> None:
+    @staticmethod
+    def _wrap_cell_widget(widget: QWidget) -> QWidget:
+        wrap = QWidget()
+        lay = QHBoxLayout(wrap)
+        lay.setContentsMargins(6, 3, 6, 3)
+        lay.setSpacing(0)
+        lay.setAlignment(Qt.AlignVCenter)
+        lay.addWidget(widget)
+        return wrap
+
+    def remove_selected_row(self) -> None:
         r = self._table.currentRow()
         if r >= 0:
             self._table.removeRow(r)
             if self._table.rowCount() == 0:
                 self.add_row()
             self.changed.emit()
+
+    def _apply_minimum_heights(self) -> None:
+        header_h = self._table.horizontalHeader().sizeHint().height()
+        table_min_h = header_h + self._ROW_HEIGHT + 8
+        self._table.setMinimumHeight(table_min_h)
+        self.setMinimumHeight(table_min_h)
 
     def load_items(self, items: list[dict]) -> None:
         while self._table.rowCount():
@@ -110,14 +121,10 @@ class BinItemTable(QWidget):
         for _ in items:
             self.add_row()
         for row, it in enumerate(items):
-            w = self._table.cellWidget(row, 0)
-            h = self._table.cellWidget(row, 1)
-            q = self._table.cellWidget(row, 2)
-            rot = self._table.cellWidget(row, 3)
-            assert isinstance(w, QDoubleSpinBox)
-            assert isinstance(h, QDoubleSpinBox)
-            assert isinstance(q, QSpinBox)
-            assert isinstance(rot, QCheckBox)
+            w = self._get_cell_spinbox(row, 0, QDoubleSpinBox)
+            h = self._get_cell_spinbox(row, 1, QDoubleSpinBox)
+            q = self._get_cell_spinbox(row, 2, QSpinBox)
+            rot = self._get_rotation_checkbox(row)
             w.setValue(float(it["w"]))
             h.setValue(float(it["h"]))
             q.setValue(int(it["q"]))
@@ -127,14 +134,10 @@ class BinItemTable(QWidget):
     def to_items_payload(self) -> list[dict]:
         out: list[dict] = []
         for row in range(self._table.rowCount()):
-            w = self._table.cellWidget(row, 0)
-            h = self._table.cellWidget(row, 1)
-            q = self._table.cellWidget(row, 2)
-            rot = self._table.cellWidget(row, 3)
-            assert isinstance(w, QDoubleSpinBox)
-            assert isinstance(h, QDoubleSpinBox)
-            assert isinstance(q, QSpinBox)
-            assert isinstance(rot, QCheckBox)
+            w = self._get_cell_spinbox(row, 0, QDoubleSpinBox)
+            h = self._get_cell_spinbox(row, 1, QDoubleSpinBox)
+            q = self._get_cell_spinbox(row, 2, QSpinBox)
+            rot = self._get_rotation_checkbox(row)
             out.append(
                 {
                     "id": row,
@@ -145,3 +148,17 @@ class BinItemTable(QWidget):
                 }
             )
         return out
+
+    def _get_cell_spinbox(self, row: int, col: int, expected_type):
+        wrap = self._table.cellWidget(row, col)
+        assert isinstance(wrap, QWidget)
+        child = wrap.findChild(expected_type)
+        assert child is not None
+        return child
+
+    def _get_rotation_checkbox(self, row: int) -> QCheckBox:
+        wrap = self._table.cellWidget(row, 3)
+        assert isinstance(wrap, QWidget)
+        child = wrap.findChild(QCheckBox)
+        assert child is not None
+        return child

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from PyQt5.QtCore import QRectF, Qt
-from PyQt5.QtGui import QPainter
+from PyQt5.QtGui import QColor, QPainter
 from PyQt5.QtWidgets import QGraphicsView
 
 
@@ -11,11 +11,12 @@ class PackingGraphicsView(QGraphicsView):
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
         self._target_rect: QRectF | None = None
+        self.setObjectName("packingView")
         self.setRenderHints(
             QPainter.Antialiasing | QPainter.TextAntialiasing | QPainter.SmoothPixmapTransform
         )
         self.setDragMode(QGraphicsView.ScrollHandDrag)
-        self.setBackgroundBrush(Qt.transparent)
+        self.setBackgroundBrush(QColor("#ECEEEA"))
         self.setFrameShape(QGraphicsView.NoFrame)
 
     def fit_bin(self, bin_w: float, bin_h: float) -> None:

@@ -10,9 +10,9 @@ class BinOutlineItem(QGraphicsRectItem):
 
     def __init__(self, width: float, height: float) -> None:
         super().__init__(QRectF(0, 0, width, height))
-        pen = QPen(QColor("#2F2F2F"))
+        pen = QPen(QColor("#3B3F42"))
         pen.setWidthF(2.0)
         pen.setCosmetic(True)
         self.setPen(pen)
-        self.setBrush(QBrush(QColor("#FAFAF8")))
+        self.setBrush(QBrush(QColor("#F7F8F5")))
         self.setZValue(0)

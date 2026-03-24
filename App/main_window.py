@@ -38,6 +38,8 @@ class _LogEmitter(QObject):
 
 
 class MainWindow(QMainWindow):
+    _LEFT_NON_SPLITTER_RESERVED_HEIGHT = 110
+
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("2D Single-Bin Packing — Benchmark")
@@ -45,10 +47,11 @@ class MainWindow(QMainWindow):
         self._last_solution: PackingSolution | None = None
 
         central = QWidget()
+        central.setObjectName("appRoot")
         self.setCentralWidget(central)
         outer = QVBoxLayout(central)
-        outer.setContentsMargins(16, 16, 16, 16)
-        outer.setSpacing(10)
+        outer.setContentsMargins(24, 24, 24, 24)
+        outer.setSpacing(16)
 
         title = QLabel("2D palletization")
         title.setObjectName("pageTitle")
@@ -60,8 +63,8 @@ class MainWindow(QMainWindow):
         # Left: inputs
         left = StyledFrame()
         left_lay = QVBoxLayout(left)
-        left_lay.setContentsMargins(16, 16, 16, 16)
-        left_lay.setSpacing(10)
+        left_lay.setContentsMargins(20, 20, 20, 20)
+        left_lay.setSpacing(16)
 
         bin_title = QLabel("Pallet (bin)")
         bin_title.setObjectName("cardTitle")
@@ -88,41 +91,93 @@ class MainWindow(QMainWindow):
         items_title = QLabel("Item types")
         items_title.setObjectName("cardTitle")
         left_lay.addWidget(items_title)
+
+        self._item_split = QSplitter(Qt.Vertical)
+        self._item_split.setChildrenCollapsible(False)
+        self._item_split.setHandleWidth(6)
+
+        table_section = QWidget()
+        table_section_lay = QVBoxLayout(table_section)
+        table_section_lay.setContentsMargins(0, 0, 0, 0)
+        table_section_lay.setSpacing(0)
         self._table = BinItemTable()
         self._table.changed.connect(self._on_inputs_changed)
-        left_lay.addWidget(self._table)
+        table_section_lay.addWidget(self._table)
+
+        controls_section = QWidget()
+        controls_lay = QVBoxLayout(controls_section)
+        controls_lay.setContentsMargins(0, 8, 0, 0)
+        controls_lay.setSpacing(10)
+
+        item_btn_row = QHBoxLayout()
+        item_btn_row.setSpacing(12)
+        item_btn_row.setContentsMargins(0, 0, 0, 0)
+        btn_add_type = QPushButton("Add type")
+        btn_add_type.setObjectName("btnSecondary")
+        btn_add_type.clicked.connect(self._table.add_row)
+        btn_remove_type = QPushButton("Remove selected")
+        btn_remove_type.setObjectName("btnSecondary")
+        btn_remove_type.clicked.connect(self._table.remove_selected_row)
+        item_btn_row.addWidget(btn_add_type)
+        item_btn_row.addWidget(btn_remove_type)
+        item_btn_row.addStretch(1)
+        controls_lay.addLayout(item_btn_row)
 
         btn_row = QHBoxLayout()
+        btn_row.setSpacing(12)
+        btn_row.setContentsMargins(0, 0, 0, 0)
         self._btn_run = QPushButton("Run")
         self._btn_run.setObjectName("btnPrimary")
         self._btn_run.setMinimumHeight(40)
         self._btn_run.clicked.connect(self._on_run)
         self._btn_reset = QPushButton("Reset Scene")
         self._btn_reset.setObjectName("btnSecondary")
-        self._btn_reset.setMinimumHeight(36)
+        self._btn_reset.setMinimumHeight(40)
         self._btn_reset.clicked.connect(self._on_reset_scene)
         self._btn_load = QPushButton("Load JSON…")
         self._btn_load.setObjectName("btnSecondary")
+        self._btn_load.setMinimumHeight(40)
         self._btn_load.clicked.connect(self._on_load_json)
         self._btn_save = QPushButton("Save JSON…")
         self._btn_save.setObjectName("btnSecondary")
+        self._btn_save.setMinimumHeight(40)
         self._btn_save.clicked.connect(self._on_save_json)
         btn_row.addWidget(self._btn_run)
         btn_row.addWidget(self._btn_reset)
         btn_row.addWidget(self._btn_load)
         btn_row.addWidget(self._btn_save)
-        left_lay.addLayout(btn_row)
+        controls_lay.addLayout(btn_row)
 
         self._metrics = QLabel("—")
         self._metrics.setObjectName("metricsLabel")
         self._metrics.setWordWrap(True)
-        left_lay.addWidget(self._metrics)
-        left_lay.addStretch(1)
+        self._metrics.setContentsMargins(0, 8, 0, 8)
+        controls_lay.addWidget(self._metrics)
+
+        min_controls_h = (
+            btn_add_type.sizeHint().height()
+            + self._btn_run.minimumHeight()
+            + self._metrics.sizeHint().height()
+            + 52
+        )
+        controls_section.setMinimumHeight(min_controls_h)
+
+        self._item_split.addWidget(table_section)
+        self._item_split.addWidget(controls_section)
+        self._item_split.setStretchFactor(0, 1)
+        self._item_split.setStretchFactor(1, 0)
+        self._item_split.setCollapsible(0, False)
+        self._item_split.setCollapsible(1, False)
+        self._item_split.setSizes([280, min_controls_h])
+        table_section.setMinimumHeight(self._table.minimumHeight())
+
+        left_lay.addWidget(self._item_split, 1)
 
         # Center: canvas
         right = StyledFrame()
         rl = QVBoxLayout(right)
-        rl.setContentsMargins(16, 16, 16, 16)
+        rl.setContentsMargins(20, 20, 20, 20)
+        rl.setSpacing(16)
         cv_title = QLabel("Visualization")
         cv_title.setObjectName("cardTitle")
         rl.addWidget(cv_title)
@@ -151,6 +206,14 @@ class MainWindow(QMainWindow):
         configure_logging(self._log_emit.line)
 
         self._on_inputs_changed()
+
+    def resizeEvent(self, event) -> None:
+        super().resizeEvent(event)
+        self._apply_item_split_constraints()
+
+    def showEvent(self, event) -> None:
+        super().showEvent(event)
+        self._apply_item_split_constraints()
 
     def _build_problem(self) -> PackingProblem:
         d = {
@@ -279,3 +342,9 @@ class MainWindow(QMainWindow):
         except Exception as e:
             _LOG.error("Save failed: %s", e)
             QMessageBox.warning(self, "Save error", str(e))
+
+    def _apply_item_split_constraints(self) -> None:
+        if not hasattr(self, "_item_split"):
+            return
+        split_max = max(260, self.height() - self._LEFT_NON_SPLITTER_RESERVED_HEIGHT)
+        self._item_split.setMaximumHeight(split_max)
