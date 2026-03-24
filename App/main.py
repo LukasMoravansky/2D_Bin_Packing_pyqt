@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import sys
 import traceback
 
@@ -10,7 +11,54 @@ from App.main_window import MainWindow
 
 _LOG = get_logger("packing.gui")
 
-APPLICATION_STYLESHEET = """
+TYPOGRAPHY_PRESETS: dict[str, dict[str, str]] = {
+    "executive_calm": {
+        "ui_font_stack": '"Segoe UI", "Inter", "Arial", sans-serif',
+        "base_font_size": "14px",
+        "page_title_size": "42px",
+        "page_title_weight": "600",
+        "card_title_size": "22px",
+        "card_title_weight": "600",
+        "section_title_size": "22px",
+        "section_title_weight": "600",
+        "metrics_size": "14px",
+        "metrics_weight": "400",
+        "log_font_size": "13px",
+        "log_font_stack": '"Cascadia Mono", "Consolas", "SF Mono", monospace',
+    },
+    "industrial_dense": {
+        "ui_font_stack": '"Bahnschrift", "Segoe UI", "Arial", sans-serif',
+        "base_font_size": "13px",
+        "page_title_size": "38px",
+        "page_title_weight": "600",
+        "card_title_size": "19px",
+        "card_title_weight": "600",
+        "section_title_size": "19px",
+        "section_title_weight": "600",
+        "metrics_size": "13px",
+        "metrics_weight": "400",
+        "log_font_size": "12px",
+        "log_font_stack": '"Consolas", "Lucida Console", "Courier New", monospace',
+    },
+    "enterprise_technical": {
+        "ui_font_stack": '"Verdana", "Tahoma", "Segoe UI", sans-serif',
+        "base_font_size": "14px",
+        "page_title_size": "40px",
+        "page_title_weight": "700",
+        "card_title_size": "20px",
+        "card_title_weight": "700",
+        "section_title_size": "20px",
+        "section_title_weight": "700",
+        "metrics_size": "14px",
+        "metrics_weight": "400",
+        "log_font_size": "13px",
+        "log_font_stack": '"Consolas", "Courier New", monospace',
+    },
+}
+
+DEFAULT_TYPOGRAPHY_PRESET = "executive_calm"
+
+APPLICATION_STYLESHEET_TEMPLATE = """
 /* ===== Construction Control tokens =====
 app bg: #F3F4F1
 surface/card bg: #FFFFFF
@@ -24,8 +72,8 @@ accent dark: #232629
 QWidget {
   background: transparent;
   color: #171A1C;
-  font-family: "Inter", "Segoe UI", "SF Pro Text", sans-serif;
-  font-size: 14px;
+  font-family: __UI_FONT_STACK__;
+  font-size: __BASE_FONT_SIZE__;
 }
 QMainWindow, QWidget#appRoot, QSplitter {
   background-color: #F3F4F1;
@@ -43,24 +91,25 @@ QLabel {
   background: transparent;
 }
 QLabel#pageTitle {
-  font-size: 40px;
-  font-weight: 600;
+  font-size: __PAGE_TITLE_SIZE__;
+  font-weight: __PAGE_TITLE_WEIGHT__;
   color: #171A1C;
   letter-spacing: 0.2px;
   padding-bottom: 4px;
 }
 QLabel#cardTitle {
-  font-size: 20px;
-  font-weight: 600;
+  font-size: __CARD_TITLE_SIZE__;
+  font-weight: __CARD_TITLE_WEIGHT__;
   color: #171A1C;
 }
 QLabel#sectionTitle {
-  font-size: 20px;
-  font-weight: 600;
+  font-size: __SECTION_TITLE_SIZE__;
+  font-weight: __SECTION_TITLE_WEIGHT__;
   color: #171A1C;
 }
 QLabel#metricsLabel {
-  font-size: 14px;
+  font-size: __METRICS_SIZE__;
+  font-weight: __METRICS_WEIGHT__;
   color: #5F666D;
   line-height: 1.5;
   padding-top: 8px;
@@ -72,8 +121,8 @@ QPlainTextEdit#logPlainText {
   border-radius: 12px;
   padding: 10px 12px;
   color: #171A1C;
-  font-size: 13px;
-  font-family: "Cascadia Mono", "Consolas", "SF Mono", monospace;
+  font-size: __LOG_FONT_SIZE__;
+  font-family: __LOG_FONT_STACK__;
 }
 QDoubleSpinBox, QSpinBox {
   min-height: 30px;
@@ -152,7 +201,7 @@ QTableWidget {
 }
 QTableWidget::item {
   border: none;
-  padding: 8px 8px;
+  padding: 0px 8px;
 }
 QTableWidget::item:selected {
   background: #E6F0DD;
@@ -235,6 +284,27 @@ QAbstractScrollArea > QWidget#qt_scrollarea_viewport {
 }
 """
 
+def _build_stylesheet(preset_name: str) -> str:
+    preset = TYPOGRAPHY_PRESETS.get(preset_name, TYPOGRAPHY_PRESETS[DEFAULT_TYPOGRAPHY_PRESET])
+    stylesheet = APPLICATION_STYLESHEET_TEMPLATE
+    token_map = {
+        "__UI_FONT_STACK__": preset["ui_font_stack"],
+        "__BASE_FONT_SIZE__": preset["base_font_size"],
+        "__PAGE_TITLE_SIZE__": preset["page_title_size"],
+        "__PAGE_TITLE_WEIGHT__": preset["page_title_weight"],
+        "__CARD_TITLE_SIZE__": preset["card_title_size"],
+        "__CARD_TITLE_WEIGHT__": preset["card_title_weight"],
+        "__SECTION_TITLE_SIZE__": preset["section_title_size"],
+        "__SECTION_TITLE_WEIGHT__": preset["section_title_weight"],
+        "__METRICS_SIZE__": preset["metrics_size"],
+        "__METRICS_WEIGHT__": preset["metrics_weight"],
+        "__LOG_FONT_SIZE__": preset["log_font_size"],
+        "__LOG_FONT_STACK__": preset["log_font_stack"],
+    }
+    for token, value in token_map.items():
+        stylesheet = stylesheet.replace(token, value)
+    return stylesheet
+
 
 def _excepthook(exc_type, exc, tb) -> None:
     text = "".join(traceback.format_exception(exc_type, exc, tb))
@@ -247,11 +317,20 @@ def _excepthook(exc_type, exc, tb) -> None:
 
 def main() -> None:
     sys.excepthook = _excepthook
+    preset_name = os.getenv("PACKING_UI_FONT_PRESET", DEFAULT_TYPOGRAPHY_PRESET).strip().lower()
+    if preset_name not in TYPOGRAPHY_PRESETS:
+        _LOG.warning(
+            "Unknown PACKING_UI_FONT_PRESET '%s'. Falling back to '%s'.",
+            preset_name,
+            DEFAULT_TYPOGRAPHY_PRESET,
+        )
+        preset_name = DEFAULT_TYPOGRAPHY_PRESET
     app = QApplication(sys.argv)
-    app.setStyleSheet(APPLICATION_STYLESHEET)
+    app.setStyleSheet(_build_stylesheet(preset_name))
     win = MainWindow()
     win.resize(1280, 800)
     win.show()
+    _LOG.info("Typography preset selected: %s", preset_name)
     _LOG.info("Application started.")
     sys.exit(app.exec_())
 

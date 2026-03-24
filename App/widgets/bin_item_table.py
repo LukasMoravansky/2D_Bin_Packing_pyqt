@@ -20,12 +20,18 @@ class BinItemTable(QWidget):
     """Editable table: w, h, q, rotation per row."""
 
     changed = pyqtSignal()
-    _ROW_HEIGHT = 42
+    _SPINBOX_V_MARGIN = 4
+    _SPINBOX_H_MARGIN = 6
+    _ROW_HEIGHT_BUFFER = 2
     _QTY_COL_WIDTH = 88
     _ROT_COL_WIDTH = 112
 
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
+        self._editor_min_height = self._compute_editor_min_height()
+        self._ROW_HEIGHT = (
+            self._editor_min_height + (2 * self._SPINBOX_V_MARGIN) + self._ROW_HEIGHT_BUFFER
+        )
         self._table = QTableWidget(0, 4)
         self._table.setHorizontalHeaderLabels(["w (mm)", "h (mm)", "qty", "90° rot."])
         self._table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
@@ -38,6 +44,7 @@ class BinItemTable(QWidget):
         self._table.horizontalHeader().setMinimumSectionSize(64)
         self._table.verticalHeader().setDefaultSectionSize(self._ROW_HEIGHT)
         self._table.verticalHeader().setMinimumSectionSize(self._ROW_HEIGHT)
+        self._table.verticalHeader().setSectionResizeMode(QHeaderView.Fixed)
         self._table.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContentsOnFirstShow)
         self._table.setSelectionBehavior(QAbstractItemView.SelectRows)
         self._table.setSelectionMode(QAbstractItemView.SingleSelection)
@@ -55,12 +62,14 @@ class BinItemTable(QWidget):
     def add_row(self) -> None:
         r = self._table.rowCount()
         self._table.insertRow(r)
+        self._table.setRowHeight(r, self._ROW_HEIGHT)
         for c, val in enumerate((200.0, 150.0, 1, False)):
             if c < 2:
                 spin = QDoubleSpinBox()
                 spin.setRange(0.01, 1e9)
                 spin.setDecimals(2)
                 spin.setValue(float(val))
+                spin.setMinimumHeight(self._editor_min_height)
                 spin.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
                 spin.setButtonSymbols(QAbstractSpinBox.NoButtons)
                 spin.setKeyboardTracking(False)
@@ -70,6 +79,7 @@ class BinItemTable(QWidget):
                 iq = QSpinBox()
                 iq.setRange(0, 1_000_000)
                 iq.setValue(int(val))
+                iq.setMinimumHeight(self._editor_min_height)
                 iq.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
                 iq.setButtonSymbols(QAbstractSpinBox.NoButtons)
                 iq.setKeyboardTracking(False)
@@ -92,11 +102,23 @@ class BinItemTable(QWidget):
     def _wrap_cell_widget(widget: QWidget) -> QWidget:
         wrap = QWidget()
         lay = QHBoxLayout(wrap)
-        lay.setContentsMargins(6, 3, 6, 3)
+        lay.setContentsMargins(
+            BinItemTable._SPINBOX_H_MARGIN,
+            BinItemTable._SPINBOX_V_MARGIN,
+            BinItemTable._SPINBOX_H_MARGIN,
+            BinItemTable._SPINBOX_V_MARGIN,
+        )
         lay.setSpacing(0)
         lay.setAlignment(Qt.AlignVCenter)
         lay.addWidget(widget)
         return wrap
+
+    @staticmethod
+    def _compute_editor_min_height() -> int:
+        probe = QDoubleSpinBox()
+        probe.setButtonSymbols(QAbstractSpinBox.NoButtons)
+        # Respect active style metrics so editors never get clipped.
+        return max(30, probe.sizeHint().height())
 
     def remove_selected_row(self) -> None:
         r = self._table.currentRow()
