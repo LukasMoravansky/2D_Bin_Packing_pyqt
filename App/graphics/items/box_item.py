@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from PyQt5.QtCore import QRectF, Qt
-from PyQt5.QtGui import QBrush, QColor, QFont, QPen
+from PyQt5.QtGui import QBrush, QColor, QFont, QFontMetricsF, QPen
 from PyQt5.QtWidgets import QGraphicsRectItem, QGraphicsSimpleTextItem
 
 from src.domain.placed_piece import PlacedPiece
@@ -46,19 +46,34 @@ class PlacedBoxItem(QGraphicsRectItem):
         self.setAcceptHoverEvents(True)
         self.setFlag(QGraphicsRectItem.ItemIsSelectable, True)
 
-        # Dimension text inside box when large enough (scene units = mm)
+        # Dimension text inside box when large enough (scene units = mm).
+        # Keep label strictly inside item bounds by shrinking font and eliding if needed.
         min_mm = 80.0
         if piece.width >= min_mm and piece.height >= min_mm:
-            label = f"T{piece.type_id + 1}  {int(piece.width)} x {int(piece.height)}"
-            t = QGraphicsSimpleTextItem(label, self)
-            t.setBrush(QColor("#444A4F"))
-            f = QFont("Inter", 9)
-            t.setFont(f)
-            br = t.boundingRect()
-            cx = (piece.width - br.width()) / 2
-            cy = (piece.height - br.height()) / 2
-            t.setPos(cx, cy)
-            t.setZValue(20)
+            padding = 4.0
+            max_text_w = max(0.0, piece.width - (2 * padding))
+            max_text_h = max(0.0, piece.height - (2 * padding))
+            if max_text_w > 0.0 and max_text_h > 0.0:
+                full_label = f"T{piece.type_id + 1}  {int(piece.width)} x {int(piece.height)}"
+                label_font = QFont("Inter", 9)
+                min_pt = 7
+                while label_font.pointSize() > min_pt:
+                    fm = QFontMetricsF(label_font)
+                    if fm.horizontalAdvance(full_label) <= max_text_w and fm.height() <= max_text_h:
+                        break
+                    label_font.setPointSize(label_font.pointSize() - 1)
+
+                fm = QFontMetricsF(label_font)
+                visible_label = fm.elidedText(full_label, Qt.ElideRight, max_text_w)
+                if visible_label:
+                    t = QGraphicsSimpleTextItem(visible_label, self)
+                    t.setBrush(QColor("#444A4F"))
+                    t.setFont(label_font)
+                    br = t.boundingRect()
+                    cx = max(padding, (piece.width - br.width()) / 2)
+                    cy = max(padding, (piece.height - br.height()) / 2)
+                    t.setPos(cx, cy)
+                    t.setZValue(20)
 
     def set_selected_visual(self, selected: bool) -> None:
         self._is_selected = selected

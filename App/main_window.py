@@ -7,11 +7,13 @@ from PyQt5.QtCore import QObject, Qt, pyqtSignal
 from PyQt5.QtWidgets import (
     QFileDialog,
     QFormLayout,
+    QGridLayout,
     QHBoxLayout,
     QLabel,
     QMainWindow,
     QMessageBox,
     QPushButton,
+    QSizePolicy,
     QSplitter,
     QVBoxLayout,
     QWidget,
@@ -193,12 +195,15 @@ class MainWindow(QMainWindow):
         cv_title = QLabel("Visualization")
         cv_title.setObjectName("cardTitle")
         rl.addWidget(cv_title)
-        self._kpi_row = QHBoxLayout()
+        self._kpi_row = QGridLayout()
         self._kpi_row.setContentsMargins(0, 0, 0, 0)
-        self._kpi_row.setSpacing(10)
-        self._kpi_util_value = self._create_kpi_card(self._kpi_row, "Utilization", "—")
-        self._kpi_placed_value = self._create_kpi_card(self._kpi_row, "Placed / Unplaced", "—")
-        self._kpi_time_value = self._create_kpi_card(self._kpi_row, "Solve Time", "—")
+        self._kpi_row.setHorizontalSpacing(10)
+        self._kpi_row.setVerticalSpacing(10)
+        self._kpi_cards: list[QWidget] = []
+        self._kpi_util_value = self._create_kpi_card("Utilization", "—")
+        self._kpi_placed_value = self._create_kpi_card("Placed / Unplaced", "—")
+        self._kpi_time_value = self._create_kpi_card("Solve Time", "—")
+        self._layout_kpi_cards()
         rl.addLayout(self._kpi_row)
         self._scene = PackingScene()
         self._view = PackingGraphicsView()
@@ -233,10 +238,12 @@ class MainWindow(QMainWindow):
     def resizeEvent(self, event) -> None:
         super().resizeEvent(event)
         self._apply_item_split_constraints()
+        self._layout_kpi_cards()
 
     def showEvent(self, event) -> None:
         super().showEvent(event)
         self._apply_item_split_constraints()
+        self._layout_kpi_cards()
 
     def _build_problem(self) -> PackingProblem:
         d = {
@@ -381,9 +388,10 @@ class MainWindow(QMainWindow):
         split_max = max(260, self.height() - self._LEFT_NON_SPLITTER_RESERVED_HEIGHT)
         self._item_split.setMaximumHeight(split_max)
 
-    def _create_kpi_card(self, row: QHBoxLayout, title: str, value: str) -> QLabel:
+    def _create_kpi_card(self, title: str, value: str) -> QLabel:
         card = QWidget()
         card.setObjectName("kpiCard")
+        card.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         lay = QVBoxLayout(card)
         lay.setContentsMargins(12, 10, 12, 10)
         lay.setSpacing(4)
@@ -393,8 +401,27 @@ class MainWindow(QMainWindow):
         val.setObjectName("kpiValue")
         lay.addWidget(ttl)
         lay.addWidget(val)
-        row.addWidget(card)
+        self._kpi_cards.append(card)
         return val
+
+    def _layout_kpi_cards(self) -> None:
+        if not hasattr(self, "_kpi_row"):
+            return
+        width = self.width()
+        if width < 900:
+            cols = 1
+        elif width < 1280:
+            cols = 2
+        else:
+            cols = 3
+        while self._kpi_row.count():
+            self._kpi_row.takeAt(0)
+        for idx, card in enumerate(self._kpi_cards):
+            row = idx // cols
+            col = idx % cols
+            self._kpi_row.addWidget(card, row, col)
+        for col in range(cols):
+            self._kpi_row.setColumnStretch(col, 1)
 
     def _set_kpis(self, util: str, placed: str, solve_time: str) -> None:
         self._kpi_util_value.setText(util)
