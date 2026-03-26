@@ -5,6 +5,7 @@ from pathlib import Path
 
 from PyQt5.QtCore import QEvent, QObject, Qt, pyqtSignal
 from PyQt5.QtWidgets import (
+    QAbstractSpinBox,
     QComboBox,
     QFrame,
     QFileDialog,
@@ -86,6 +87,7 @@ class MainWindow(QMainWindow):
 
         # Left: inputs
         left = StyledFrame()
+        self._left_panel = left
         left_lay = QVBoxLayout(left)
         left_lay.setContentsMargins(20, 20, 20, 20)
         left_lay.setSpacing(16)
@@ -95,12 +97,20 @@ class MainWindow(QMainWindow):
         left_lay.addWidget(bin_title)
 
         form = QFormLayout()
+        form.setContentsMargins(12, 10, 12, 10)
+        form.setHorizontalSpacing(13)
+        form.setVerticalSpacing(11)
+        form.setLabelAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        form.setFormAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         self._spin_w = QDoubleSpinBox()
         self._spin_h = QDoubleSpinBox()
         self._spin_g = QDoubleSpinBox()
         for sp in (self._spin_w, self._spin_h, self._spin_g):
             sp.setRange(0.0, 1e9)
             sp.setDecimals(2)
+            sp.setButtonSymbols(QAbstractSpinBox.NoButtons)
+            sp.setMinimumHeight(36)
+            sp.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
             sp.installEventFilter(self)
         self._spin_w.setValue(1200.0)
         self._spin_h.setValue(800.0)
@@ -108,10 +118,44 @@ class MainWindow(QMainWindow):
         self._spin_w.valueChanged.connect(self._on_inputs_changed)
         self._spin_h.valueChanged.connect(self._on_inputs_changed)
         self._spin_g.valueChanged.connect(self._on_inputs_changed)
-        form.addRow("W (mm)", self._spin_w)
-        form.addRow("H (mm)", self._spin_h)
-        form.addRow("g (mm)", self._spin_g)
-        left_lay.addLayout(form)
+        label_w = QLabel("W (mm)")
+        label_h = QLabel("H (mm)")
+        label_g = QLabel("g (mm)")
+        for label in (label_w, label_h, label_g):
+            label.setObjectName("binFieldLabel")
+            label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        form.addRow(label_w, self._spin_w)
+        form.addRow(label_h, self._spin_h)
+        form.addRow(label_g, self._spin_g)
+
+        self._bin_form_widget = QFrame()
+        self._bin_form_widget.setObjectName("binFormCard")
+        self._bin_form_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self._bin_form_widget.setLayout(form)
+
+        self._solver_block = QFrame()
+        self._solver_block.setObjectName("solverSelectorCard")
+        solver_block_lay = QVBoxLayout(self._solver_block)
+        solver_block_lay.setContentsMargins(12, 10, 12, 10)
+        solver_block_lay.setSpacing(8)
+        solver_label = QLabel("Solver strategy")
+        solver_label.setObjectName("solverLabel")
+        self._solver_combo = QComboBox()
+        self._solver_combo.setObjectName("solverCombo")
+        self._solver_combo.setMinimumHeight(36)
+        self._solver_combo.installEventFilter(self)
+        solver_hint = QLabel("Select packing algorithm for this run.")
+        solver_hint.setObjectName("solverHint")
+        solver_hint.setWordWrap(True)
+        solver_block_lay.addWidget(solver_label)
+        solver_block_lay.addWidget(self._solver_combo)
+        solver_block_lay.addWidget(solver_hint)
+
+        self._bin_config_row = QGridLayout()
+        self._bin_config_row.setContentsMargins(0, 0, 0, 0)
+        self._bin_config_row.setHorizontalSpacing(12)
+        self._bin_config_row.setVerticalSpacing(10)
+        left_lay.addLayout(self._bin_config_row)
 
         items_title = QLabel("Item types")
         items_title.setObjectName("cardTitle")
@@ -149,23 +193,6 @@ class MainWindow(QMainWindow):
         item_btn_row.addWidget(btn_remove_type)
         item_btn_row.addStretch(1)
         controls_lay.addLayout(item_btn_row)
-
-        solver_block = QFrame()
-        solver_block.setObjectName("solverSelectorCard")
-        solver_block_lay = QVBoxLayout(solver_block)
-        solver_block_lay.setContentsMargins(12, 10, 12, 10)
-        solver_block_lay.setSpacing(6)
-        solver_label = QLabel("Solver strategy")
-        solver_label.setObjectName("solverLabel")
-        self._solver_combo = QComboBox()
-        self._solver_combo.setObjectName("solverCombo")
-        self._solver_combo.setMinimumHeight(36)
-        solver_hint = QLabel("Select packing algorithm for this run.")
-        solver_hint.setObjectName("solverHint")
-        solver_block_lay.addWidget(solver_label)
-        solver_block_lay.addWidget(self._solver_combo)
-        solver_block_lay.addWidget(solver_hint)
-        controls_lay.addWidget(solver_block)
 
         btn_row = QHBoxLayout()
         btn_row.setSpacing(12)
@@ -262,15 +289,18 @@ class MainWindow(QMainWindow):
     def resizeEvent(self, event) -> None:
         super().resizeEvent(event)
         self._apply_item_split_constraints()
+        self._layout_bin_config()
         self._layout_kpi_cards()
 
     def showEvent(self, event) -> None:
         super().showEvent(event)
         self._apply_item_split_constraints()
+        self._layout_bin_config()
         self._layout_kpi_cards()
 
     def eventFilter(self, watched: QObject, event: QEvent) -> bool:
-        if watched in (self._spin_w, self._spin_h, self._spin_g) and event.type() == QEvent.Wheel:
+        solver_combo = getattr(self, "_solver_combo", None)
+        if watched in (self._spin_w, self._spin_h, self._spin_g, solver_combo) and event.type() == QEvent.Wheel:
             # Prevent accidental pallet value edits while scrolling.
             event.ignore()
             return True
@@ -393,6 +423,7 @@ class MainWindow(QMainWindow):
             self._spin_g.setValue(b.gap)
             payload = [
                 {
+                    "id": it.type_id,
                     "w": it.width,
                     "h": it.height,
                     "q": it.quantity,
@@ -463,6 +494,22 @@ class MainWindow(QMainWindow):
             self._kpi_row.addWidget(card, row, col)
         for col in range(cols):
             self._kpi_row.setColumnStretch(col, 1)
+
+    def _layout_bin_config(self) -> None:
+        if not hasattr(self, "_bin_config_row"):
+            return
+        while self._bin_config_row.count():
+            self._bin_config_row.takeAt(0)
+        narrow_panel = self._left_panel.width() < 520
+        if narrow_panel:
+            self._bin_config_row.addWidget(self._bin_form_widget, 0, 0)
+            self._bin_config_row.addWidget(self._solver_block, 1, 0)
+            self._bin_config_row.setColumnStretch(0, 1)
+        else:
+            self._bin_config_row.addWidget(self._bin_form_widget, 0, 0)
+            self._bin_config_row.addWidget(self._solver_block, 0, 1)
+            self._bin_config_row.setColumnStretch(0, 3)
+            self._bin_config_row.setColumnStretch(1, 2)
 
     def _set_kpis(self, util: str, placed: str, solve_time: str) -> None:
         self._kpi_util_value.setText(util)

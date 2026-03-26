@@ -178,30 +178,46 @@ QPlainTextEdit#logPlainText {
   font-size: __LOG_FONT_SIZE__;
   font-family: __LOG_FONT_STACK__;
 }
+QLabel#binFieldLabel {
+  color: #62685F;
+  font-size: 12px;
+  font-weight: 500;
+  padding-right: 8px;
+}
 QDoubleSpinBox, QSpinBox {
-  min-height: 34px;
-  padding: 2px 10px;
-  border: 1px solid #E2E5E1;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid #DADDD6;
   border-radius: 10px;
-  background: #FFFFFF;
+  background: #FBFBF9;
+  color: #161A16;
 }
 QDoubleSpinBox:hover, QSpinBox:hover, QComboBox:hover {
-  border: 1px solid #D2D7D2;
+  border: 1px solid #C8CCC4;
+  background: #FFFFFF;
 }
 QDoubleSpinBox:focus, QSpinBox:focus, QComboBox:focus {
-  border: 1px solid #BFDFA8;
+  border: 1px solid #9CB77E;
   background: #FFFFFF;
   selection-background-color: #DCECD1;
-  selection-color: #171A1C;
+  selection-color: #161A16;
+}
+QDoubleSpinBox:disabled, QSpinBox:disabled, QComboBox:disabled {
+  color: #8B9088;
+  background: #F2F3EF;
+  border: 1px solid #DADDD6;
 }
 QComboBox {
-  min-height: 34px;
-  padding: 2px 10px;
-  border: 1px solid #E2E5E1;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid #DADDD6;
   border-radius: 10px;
-  background: #FFFFFF;
+  background: #FBFBF9;
+  color: #161A16;
 }
 QComboBox::drop-down {
+  subcontrol-origin: padding;
+  subcontrol-position: top right;
   width: 26px;
   border: none;
   background: transparent;
@@ -210,10 +226,13 @@ QComboBox::down-arrow {
   image: none;
   width: 0px;
   height: 0px;
-  border-left: 5px solid transparent;
-  border-right: 5px solid transparent;
-  border-top: 6px solid #5F666D;
-  margin-right: 8px;
+  margin-right: 10px;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 6px solid #62685F;
+}
+QComboBox::down-arrow:disabled {
+  border-top: 6px solid #8B9088;
 }
 QComboBox QAbstractItemView {
   background: #FFFFFF;
@@ -222,19 +241,25 @@ QComboBox QAbstractItemView {
   selection-background-color: #E6F0DD;
   selection-color: #171A1C;
 }
+QFrame#binFormCard,
 QFrame#solverSelectorCard {
   background: #F8F9F6;
-  border: 1px solid #E2E5E1;
-  border-radius: 10px;
+  border: 1px solid #DADDD6;
+  border-radius: 11px;
+}
+QFrame#binFormCard:hover,
+QFrame#solverSelectorCard:hover {
+  border: 1px solid #C8CCC4;
 }
 QLabel#solverLabel {
   color: #171A1C;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
 }
 QLabel#solverHint {
-  color: #5F666D;
+  color: #8B9088;
   font-size: 11px;
+  padding-top: 2px;
 }
 QPushButton#btnPrimary {
   min-height: 38px;

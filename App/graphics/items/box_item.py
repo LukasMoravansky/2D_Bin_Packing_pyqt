@@ -54,7 +54,7 @@ class PlacedBoxItem(QGraphicsRectItem):
             max_text_w = max(0.0, piece.width - (2 * padding))
             max_text_h = max(0.0, piece.height - (2 * padding))
             if max_text_w > 0.0 and max_text_h > 0.0:
-                full_label = f"T{piece.type_id + 1}  {int(piece.width)} x {int(piece.height)}"
+                full_label = f"T{piece.type_id}  {int(piece.width)} x {int(piece.height)}"
                 label_font = QFont("Inter", 9)
                 min_pt = 7
                 while label_font.pointSize() > min_pt:

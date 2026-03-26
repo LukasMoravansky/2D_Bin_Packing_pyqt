@@ -30,6 +30,7 @@ class BinItemTable(QWidget):
 
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
+        self._row_type_ids: list[int] = []
         self._editor_min_height = self._compute_editor_min_height()
         self._ROW_HEIGHT = (
             self._editor_min_height + (2 * self._SPINBOX_V_MARGIN) + self._ROW_HEIGHT_BUFFER
@@ -77,6 +78,9 @@ class BinItemTable(QWidget):
     def add_row(self) -> None:
         r = self._table.rowCount()
         self._table.insertRow(r)
+        type_id = self._next_type_id()
+        self._row_type_ids.insert(r, type_id)
+        self._update_vertical_headers()
         self._table.setRowHeight(r, self._ROW_HEIGHT)
         for c, val in enumerate((200.0, 150.0, 1, False)):
             if c < 2:
@@ -141,6 +145,9 @@ class BinItemTable(QWidget):
         r = self._table.currentRow()
         if r >= 0:
             self._table.removeRow(r)
+            if r < len(self._row_type_ids):
+                self._row_type_ids.pop(r)
+            self._update_vertical_headers()
             if self._table.rowCount() == 0:
                 self.add_row()
             self.changed.emit()
@@ -156,23 +163,66 @@ class BinItemTable(QWidget):
         row = self._table.currentRow()
         if row < 0:
             return -1
-        return row
+        return self._row_type_ids[row] if row < len(self._row_type_ids) else -1
 
     def select_type_id(self, type_id: int) -> None:
-        if 0 <= type_id < self._table.rowCount():
-            self._table.selectRow(type_id)
-            idx = self._table.model().index(type_id, 0)
+        if type_id not in self._row_type_ids:
+            return
+        row = self._row_type_ids.index(type_id)
+        if 0 <= row < self._table.rowCount():
+            self._table.selectRow(row)
+            idx = self._table.model().index(row, 0)
             self._table.scrollTo(idx, QAbstractItemView.PositionAtCenter)
             self._emit_selection_changed()
 
     def load_items(self, items: list[dict]) -> None:
+        self._row_type_ids = []
         while self._table.rowCount():
             self._table.removeRow(0)
         if not items:
             self.add_row()
             return
-        for _ in items:
-            self.add_row()
+        for row_data in items:
+            r = self._table.rowCount()
+            self._table.insertRow(r)
+            self._table.setRowHeight(r, self._ROW_HEIGHT)
+            for c, val in enumerate((200.0, 150.0, 1, False)):
+                if c < 2:
+                    spin = QDoubleSpinBox()
+                    spin.setRange(0.01, 1e9)
+                    spin.setDecimals(2)
+                    spin.setValue(float(val))
+                    spin.setMinimumHeight(self._editor_min_height)
+                    spin.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                    spin.setButtonSymbols(QAbstractSpinBox.NoButtons)
+                    spin.setKeyboardTracking(False)
+                    spin.installEventFilter(self)
+                    spin.valueChanged.connect(lambda *_: self.changed.emit())
+                    self._table.setCellWidget(r, c, self._wrap_cell_widget(spin))
+                elif c == 2:
+                    iq = QSpinBox()
+                    iq.setRange(0, 1_000_000)
+                    iq.setValue(int(val))
+                    iq.setMinimumHeight(self._editor_min_height)
+                    iq.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                    iq.setButtonSymbols(QAbstractSpinBox.NoButtons)
+                    iq.setKeyboardTracking(False)
+                    iq.installEventFilter(self)
+                    iq.valueChanged.connect(lambda *_: self.changed.emit())
+                    self._table.setCellWidget(r, c, self._wrap_cell_widget(iq))
+                else:
+                    cb = QCheckBox()
+                    cb.setChecked(bool(val))
+                    cb.stateChanged.connect(lambda *_: self.changed.emit())
+                    cb_wrap = QWidget()
+                    cb_lay = QHBoxLayout(cb_wrap)
+                    cb_lay.setContentsMargins(0, 0, 0, 0)
+                    cb_lay.setSpacing(0)
+                    cb_lay.setAlignment(Qt.AlignCenter)
+                    cb_lay.addWidget(cb)
+                    self._table.setCellWidget(r, c, cb_wrap)
+            self._row_type_ids.append(int(row_data.get("id", self._next_type_id())))
+        self._update_vertical_headers()
         for row, it in enumerate(items):
             w = self._get_cell_spinbox(row, 0, QDoubleSpinBox)
             h = self._get_cell_spinbox(row, 1, QDoubleSpinBox)
@@ -194,7 +244,7 @@ class BinItemTable(QWidget):
             rot = self._get_rotation_checkbox(row)
             out.append(
                 {
-                    "id": row,
+                    "id": self._row_type_ids[row] if row < len(self._row_type_ids) else row,
                     "w": w.value(),
                     "h": h.value(),
                     "q": q.value(),
@@ -221,4 +271,22 @@ class BinItemTable(QWidget):
         self.selection_changed.emit(self.selected_type_id())
 
     def _on_cell_entered(self, row: int, _col: int) -> None:
-        self.hover_changed.emit(row)
+        type_id = self._row_type_ids[row] if 0 <= row < len(self._row_type_ids) else -1
+        self.hover_changed.emit(type_id)
+
+    def _next_type_id(self) -> int:
+        if not self._row_type_ids:
+            return 0
+        return max(self._row_type_ids) + 1
+
+    def _update_vertical_headers(self) -> None:
+        for row, type_id in enumerate(self._row_type_ids):
+            self._table.setVerticalHeaderItem(row, self._header_item(f"{type_id}"))
+
+    @staticmethod
+    def _header_item(text: str):
+        from PyQt5.QtWidgets import QTableWidgetItem
+
+        item = QTableWidgetItem(text)
+        item.setTextAlignment(Qt.AlignVCenter | Qt.AlignRight)
+        return item
