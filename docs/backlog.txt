@@ -25,3 +25,7 @@ průběžně fixuju vizuální bugy a ptám se ho jako experta (subagenta) co by
 
 pozn. Navrhované změny napsal expertní sub agent, kterého jsem navrhl(zkopíroval) Já jsem mu jen říkal, aby se nebál ten vizuál posunovat dál.
 
+26.03.
+-fixování GUI (vizuální malé bugy) - hledám a zadám agentovi manuálně - nedávám mu projet celou aplikaci aby si ty bugy našel sám
+-pridan geneticky algoritmus
+

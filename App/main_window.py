@@ -32,7 +32,11 @@ from App.widgets.styled_frame import StyledFrame
 from App.workers.solve_worker import SolveThread
 from src.domain.problem import PackingProblem
 from src.domain.solution import PackingSolution
-from src.io.json_config import load_problem_from_json_file, save_problem_to_json_file
+from src.io.json_config import (
+    load_problem_from_json_file,
+    save_problem_to_json_file,
+    save_solution_to_json_file,
+)
 from src.solver.registry import DEFAULT_SOLVER_ID, list_solver_ids
 from src.validation.input_model import build_problem_from_dict
 from src.validation.validate import validate
@@ -52,6 +56,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("2D Single-Bin Packing — Benchmark")
         self._solve_thread: SolveThread | None = None
         self._last_solution: PackingSolution | None = None
+        self._solution_dirty = False
         self._scenario_name = "Manual scenario"
 
         central = QWidget()
@@ -242,9 +247,19 @@ class MainWindow(QMainWindow):
         rl = QVBoxLayout(right)
         rl.setContentsMargins(20, 20, 20, 20)
         rl.setSpacing(16)
+        viz_header = QHBoxLayout()
+        viz_header.setContentsMargins(0, 0, 0, 0)
+        viz_header.setSpacing(12)
         cv_title = QLabel("Visualization")
         cv_title.setObjectName("cardTitle")
-        rl.addWidget(cv_title)
+        self._btn_export_solution = QPushButton("Export Solution (JSON)…")
+        self._btn_export_solution.setObjectName("btnSecondary")
+        self._btn_export_solution.setMinimumHeight(36)
+        self._btn_export_solution.clicked.connect(self._on_export_solution_json)
+        viz_header.addWidget(cv_title)
+        viz_header.addStretch(1)
+        viz_header.addWidget(self._btn_export_solution)
+        rl.addLayout(viz_header)
         self._kpi_row = QGridLayout()
         self._kpi_row.setContentsMargins(0, 0, 0, 0)
         self._kpi_row.setHorizontalSpacing(10)
@@ -313,11 +328,14 @@ class MainWindow(QMainWindow):
         }
         return build_problem_from_dict(d)
 
-    def _on_inputs_changed(self) -> None:
+    def _on_inputs_changed(self, *, mark_dirty: bool = True) -> None:
+        if mark_dirty and self._last_solution is not None:
+            self._solution_dirty = True
         selected_solver_id = self._selected_solver_id()
         if not selected_solver_id:
             self._btn_run.setEnabled(False)
             self._set_status_state("INVALID")
+            self._update_export_button_state()
             return
         try:
             p = self._build_problem()
@@ -326,12 +344,14 @@ class MainWindow(QMainWindow):
             self._btn_run.setEnabled(False)
             self._set_status_state("INVALID")
             self._set_kpis("—", "—", "—")
+            self._update_export_button_state()
             return
         self._btn_run.setEnabled(vr.ok)
         if vr.ok:
             self._set_status_state("VALID")
         else:
             self._set_status_state("INVALID")
+        self._update_export_button_state()
 
     def _on_run(self) -> None:
         if self._solve_thread and self._solve_thread.isRunning():
@@ -350,6 +370,7 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "Validation", "\n".join(vr.errors))
             return
         self._btn_run.setEnabled(False)
+        self._update_export_button_state()
         _LOG.info("Solve started with solver '%s'.", selected_solver_id)
         self._solve_thread = SolveThread(problem, solver_id=selected_solver_id)
         self._solve_thread.finished_ok.connect(self._on_solve_ok)
@@ -359,11 +380,12 @@ class MainWindow(QMainWindow):
 
     def _on_solve_finished(self) -> None:
         self._btn_run.setEnabled(True)
-        self._on_inputs_changed()
+        self._on_inputs_changed(mark_dirty=False)
 
     def _on_solve_ok(self, sol: object) -> None:
         assert isinstance(sol, PackingSolution)
         self._last_solution = sol
+        self._solution_dirty = False
         bs = sol.bin_spec
         self._scene.draw_solution(bs, sol)
         self._view.fit_bin(bs.width, bs.height)
@@ -387,6 +409,7 @@ class MainWindow(QMainWindow):
             f"{placed} / {unplaced}",
             f"{sol.solve_time_s:.4f}s",
         )
+        self._update_export_button_state()
         if unplaced_txt != "{}":
             _LOG.info("Unplaced detail: %s", unplaced_txt)
 
@@ -396,6 +419,7 @@ class MainWindow(QMainWindow):
 
     def _on_reset_scene(self) -> None:
         self._last_solution = None
+        self._solution_dirty = False
         try:
             p = self._build_problem()
             bs = p.bin_spec
@@ -453,6 +477,55 @@ class MainWindow(QMainWindow):
         except Exception as e:
             _LOG.error("Save failed: %s", e)
             QMessageBox.warning(self, "Save error", str(e))
+
+    def _on_export_solution_json(self) -> None:
+        if self._last_solution is None:
+            QMessageBox.warning(self, "Nothing to export", "Run solver to generate a solution first.")
+            self._update_export_button_state()
+            return
+        if self._solution_dirty:
+            QMessageBox.warning(
+                self,
+                "Solution out of date",
+                "Inputs changed since last run. Re-run solver to export current solution.",
+            )
+            self._update_export_button_state()
+            return
+        path, _ = QFileDialog.getSaveFileName(self, "Export solution JSON", "", "JSON (*.json)")
+        if not path:
+            return
+        p = Path(path)
+        try:
+            save_solution_to_json_file(
+                self._last_solution,
+                p,
+                solver_id=self._selected_solver_id(),
+                scenario_name=self._scenario_name,
+            )
+            _LOG.info("Solution exported: %s", p)
+        except Exception as e:
+            _LOG.error("Solution export failed: %s", e)
+            QMessageBox.warning(
+                self,
+                "Export failed",
+                "Could not write JSON file. Check path and permissions.",
+            )
+
+    def _update_export_button_state(self) -> None:
+        running = bool(self._solve_thread and self._solve_thread.isRunning())
+        has_solution = self._last_solution is not None
+        enabled = has_solution and not self._solution_dirty and not running
+        self._btn_export_solution.setEnabled(enabled)
+        if running:
+            self._btn_export_solution.setToolTip("Wait for solver to finish before export.")
+        elif not has_solution:
+            self._btn_export_solution.setToolTip("No solution to export. Run the solver first.")
+        elif self._solution_dirty:
+            self._btn_export_solution.setToolTip(
+                "Inputs changed since last run. Re-run to export current solution."
+            )
+        else:
+            self._btn_export_solution.setToolTip("Export current solution log to JSON.")
 
     def _apply_item_split_constraints(self) -> None:
         if not hasattr(self, "_item_split"):

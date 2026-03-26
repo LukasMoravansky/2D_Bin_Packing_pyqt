@@ -110,6 +110,55 @@ python -m pytest Tests
 - **Logging:** Python `logging` with a Qt-safe bridge to the **System log** panel.
 - **Visualization:** `QGraphicsScene` / `QGraphicsView` with technical-drawing style outlines and optional in-box dimension labels for large pieces.
 
-## License
+## Solver interface contract
 
-See `LICENSE` in the repository.
+This section defines the required interface between any solver implementation and the rest of the project.
+
+### Input and output types (mandatory)
+
+- **Input:** `PackingProblem` (`src/domain/problem.py`)
+  - `problem.bin_spec.width` (float): bin width
+  - `problem.bin_spec.height` (float): bin height
+  - `problem.bin_spec.gap` (float): minimum Euclidean distance between piece footprints
+  - `problem.item_types` (tuple of `ItemType`)
+- **Output:** `PackingSolution` (`src/domain/solution.py`)
+  - `bin_spec`: copy/reference of the input bin spec
+  - `placed`: tuple of `PlacedPiece` with final placement `(x, y, width, height, rotated)`
+  - `unplaced_by_type`: `dict[int, int]` counting pieces that were not placed
+  - `solve_time_s`: elapsed solve time in seconds (the dispatcher may overwrite this with end-to-end timing)
+
+### Behavioral requirements (mandatory)
+
+Every solver must return a **valid** solution:
+
+- all placed rectangles are inside bin bounds
+- no positive-area overlap is allowed
+- pairwise minimum distance is at least `gap` (for `gap = 0`, edge/corner touch is allowed)
+- partial solutions are allowed; unplaced pieces must be reported in `unplaced_by_type`
+
+Validation is performed before solve in the worker (`src/validation/validate.py`), but solver output must still satisfy geometry rules.
+
+### Dispatch and registration
+
+- Solver selection is ID-based and centralized in `src/solver/registry.py`
+- Add your solver factory/class to `_SOLVER_FACTORIES`
+- The GUI solver dropdown is populated automatically from `list_solver_ids()`
+- Solve dispatch goes through `src/solver/interface.py`
+
+Current solver IDs:
+
+- `ga_maxrects` (default)
+- `maxrects`
+- `skyline`
+
+### Signature conventions
+
+The project currently uses two solver call patterns:
+
+- most solvers implement `solve(problem: PackingProblem) -> PackingSolution`
+- `maxrects` is a special case that receives explicit job ordering through dispatcher internals
+
+For new external/custom solvers, implement the standard form:
+
+`solve(problem: PackingProblem) -> PackingSolution`
+
