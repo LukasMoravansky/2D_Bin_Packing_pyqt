@@ -65,12 +65,14 @@ python -m App.main
 
 ## Algorithms
 
-- **Heuristic:** bottom-left placement on **maximal free rectangles** (maxrects): free space is tracked as disjoint axis-aligned rectangles; each piece is placed at the bottom-left corner of a free rectangle that fits, then that footprint is subtracted from all free regions. **Several deterministic piece orderings** are evaluated (max side / area / perimeter / aspect variants); the result **lexicographically maximizes** placed count, then minimizes unused bin area, matching the benchmark objective.
-- **Legacy:** `SkylineSolver` remains in `src/solver/skyline.py` for comparison; the app uses `solve()` from `src/solver/interface.py`.
+- **Default solver (`ga_maxrects`):** a deterministic **genetic algorithm (GA)** in `src/solver/ga_solver/solver.py` evolves piece order permutations and decodes each individual via the existing **MaxRects** placement engine. Objective is benchmark-aligned and strictly lexicographic: maximize placed count first, then minimize unused area.
+- **Decoder / baseline (`maxrects`):** bottom-left placement on **maximal free rectangles**. Free space is tracked as disjoint axis-aligned rectangles; each placed footprint is subtracted from free regions. Multiple deterministic orderings are still available and used as seeds/fallback.
+- **Legacy (`skyline`):** `SkylineSolver` remains available for comparison.
+- **Determinism:** GA uses a seedable RNG (`random.Random(seed)`, default seed `42`). Same input + same seed yields the same output layout.
+- **Robustness:** GA is a metaheuristic layer only. On any internal GA failure, solver automatically falls back to deterministic MaxRects and still returns a valid (possibly partial) solution.
 - **Gap handling:** Euclidean **minimum distance** between item footprints must be ≥ **g**; for **g = 0**, edge/corner contact is allowed but **positive-area overlap** is forbidden.
-- The implementation is **deterministic** (no randomness) for benchmark traceability.
 
-**Limits:** Maxrects is still a heuristic; it does not guarantee a global optimum for the lexicographic objective.
+**Trade-off:** GA usually finds denser layouts than single-order heuristics under the same time budget, but does not guarantee a global optimum.
 
 ## JSON configuration
 

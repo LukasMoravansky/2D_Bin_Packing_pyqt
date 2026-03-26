@@ -185,14 +185,56 @@ QDoubleSpinBox, QSpinBox {
   border-radius: 10px;
   background: #FFFFFF;
 }
-QDoubleSpinBox:hover, QSpinBox:hover {
+QDoubleSpinBox:hover, QSpinBox:hover, QComboBox:hover {
   border: 1px solid #D2D7D2;
 }
-QDoubleSpinBox:focus, QSpinBox:focus {
+QDoubleSpinBox:focus, QSpinBox:focus, QComboBox:focus {
   border: 1px solid #BFDFA8;
   background: #FFFFFF;
   selection-background-color: #DCECD1;
   selection-color: #171A1C;
+}
+QComboBox {
+  min-height: 34px;
+  padding: 2px 10px;
+  border: 1px solid #E2E5E1;
+  border-radius: 10px;
+  background: #FFFFFF;
+}
+QComboBox::drop-down {
+  width: 26px;
+  border: none;
+  background: transparent;
+}
+QComboBox::down-arrow {
+  image: none;
+  width: 0px;
+  height: 0px;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid #5F666D;
+  margin-right: 8px;
+}
+QComboBox QAbstractItemView {
+  background: #FFFFFF;
+  border: 1px solid #E2E5E1;
+  border-radius: 8px;
+  selection-background-color: #E6F0DD;
+  selection-color: #171A1C;
+}
+QFrame#solverSelectorCard {
+  background: #F8F9F6;
+  border: 1px solid #E2E5E1;
+  border-radius: 10px;
+}
+QLabel#solverLabel {
+  color: #171A1C;
+  font-size: 12px;
+  font-weight: 600;
+}
+QLabel#solverHint {
+  color: #5F666D;
+  font-size: 11px;
 }
 QPushButton#btnPrimary {
   min-height: 38px;

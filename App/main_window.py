@@ -5,6 +5,8 @@ from pathlib import Path
 
 from PyQt5.QtCore import QEvent, QObject, Qt, pyqtSignal
 from PyQt5.QtWidgets import (
+    QComboBox,
+    QFrame,
     QFileDialog,
     QFormLayout,
     QGridLayout,
@@ -30,6 +32,7 @@ from App.workers.solve_worker import SolveThread
 from src.domain.problem import PackingProblem
 from src.domain.solution import PackingSolution
 from src.io.json_config import load_problem_from_json_file, save_problem_to_json_file
+from src.solver.registry import DEFAULT_SOLVER_ID, list_solver_ids
 from src.validation.input_model import build_problem_from_dict
 from src.validation.validate import validate
 
@@ -147,6 +150,23 @@ class MainWindow(QMainWindow):
         item_btn_row.addStretch(1)
         controls_lay.addLayout(item_btn_row)
 
+        solver_block = QFrame()
+        solver_block.setObjectName("solverSelectorCard")
+        solver_block_lay = QVBoxLayout(solver_block)
+        solver_block_lay.setContentsMargins(12, 10, 12, 10)
+        solver_block_lay.setSpacing(6)
+        solver_label = QLabel("Solver strategy")
+        solver_label.setObjectName("solverLabel")
+        self._solver_combo = QComboBox()
+        self._solver_combo.setObjectName("solverCombo")
+        self._solver_combo.setMinimumHeight(36)
+        solver_hint = QLabel("Select packing algorithm for this run.")
+        solver_hint.setObjectName("solverHint")
+        solver_block_lay.addWidget(solver_label)
+        solver_block_lay.addWidget(self._solver_combo)
+        solver_block_lay.addWidget(solver_hint)
+        controls_lay.addWidget(solver_block)
+
         btn_row = QHBoxLayout()
         btn_row.setSpacing(12)
         btn_row.setContentsMargins(0, 0, 0, 0)
@@ -236,6 +256,7 @@ class MainWindow(QMainWindow):
         self._table.selection_changed.connect(self._on_table_selection_changed)
         self._table.hover_changed.connect(self._on_table_hover_changed)
 
+        self._init_solver_selector()
         self._on_inputs_changed()
 
     def resizeEvent(self, event) -> None:
@@ -263,6 +284,11 @@ class MainWindow(QMainWindow):
         return build_problem_from_dict(d)
 
     def _on_inputs_changed(self) -> None:
+        selected_solver_id = self._selected_solver_id()
+        if not selected_solver_id:
+            self._btn_run.setEnabled(False)
+            self._set_status_state("INVALID")
+            return
         try:
             p = self._build_problem()
             vr = validate(p)
@@ -280,6 +306,10 @@ class MainWindow(QMainWindow):
     def _on_run(self) -> None:
         if self._solve_thread and self._solve_thread.isRunning():
             return
+        selected_solver_id = self._selected_solver_id()
+        if not selected_solver_id:
+            QMessageBox.warning(self, "Solver", "No solver is available. Please check solver registry.")
+            return
         try:
             problem = self._build_problem()
         except Exception as e:
@@ -290,8 +320,8 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "Validation", "\n".join(vr.errors))
             return
         self._btn_run.setEnabled(False)
-        _LOG.info("Solve started.")
-        self._solve_thread = SolveThread(problem)
+        _LOG.info("Solve started with solver '%s'.", selected_solver_id)
+        self._solve_thread = SolveThread(problem, solver_id=selected_solver_id)
         self._solve_thread.finished_ok.connect(self._on_solve_ok)
         self._solve_thread.finished_error.connect(self._on_solve_err)
         self._solve_thread.finished.connect(self._on_solve_finished)
@@ -345,7 +375,8 @@ class MainWindow(QMainWindow):
             self._scene.clear_scene()
         _LOG.info("Scene reset.")
         self._set_kpis("—", "—", "—")
-        self._set_status_state("INVALID")
+        # Reset only clears visualization; keep scenario validity in sync with inputs.
+        self._on_inputs_changed()
 
     def _on_load_json(self) -> None:
         path, _ = QFileDialog.getOpenFileName(self, "Load problem JSON", "", "JSON (*.json)")
@@ -450,6 +481,59 @@ class MainWindow(QMainWindow):
         self._state_badge.setText(state)
         self._state_badge.style().unpolish(self._state_badge)
         self._state_badge.style().polish(self._state_badge)
+
+    def _init_solver_selector(self) -> None:
+        self._solver_combo.clear()
+        try:
+            solver_ids = list_solver_ids()
+        except Exception as exc:
+            _LOG.error("Failed to load solvers from registry: %s", exc)
+            self._solver_combo.addItem("No solvers available", None)
+            self._solver_combo.setEnabled(False)
+            self._btn_run.setEnabled(False)
+            return
+        if not solver_ids:
+            _LOG.error("No solver implementations registered.")
+            self._solver_combo.addItem("No solvers available", None)
+            self._solver_combo.setEnabled(False)
+            self._btn_run.setEnabled(False)
+            return
+
+        self._solver_combo.setEnabled(True)
+        for solver_id in solver_ids:
+            self._solver_combo.addItem(self._format_solver_label(solver_id), solver_id)
+
+        selected_id = DEFAULT_SOLVER_ID if DEFAULT_SOLVER_ID in solver_ids else solver_ids[0]
+        if selected_id != DEFAULT_SOLVER_ID:
+            _LOG.warning(
+                "DEFAULT_SOLVER_ID '%s' is not available. Falling back to '%s'.",
+                DEFAULT_SOLVER_ID,
+                selected_id,
+            )
+        _LOG.info("Loaded solvers: %s", ", ".join(solver_ids))
+
+        idx = self._solver_combo.findData(selected_id)
+        self._solver_combo.setCurrentIndex(max(idx, 0))
+        self._solver_combo.currentIndexChanged.connect(self._on_inputs_changed)
+
+    def _selected_solver_id(self) -> str | None:
+        selected = self._solver_combo.currentData()
+        if selected is None:
+            return None
+        return str(selected)
+
+    def _format_solver_label(self, solver_id: str) -> str:
+        tokens = []
+        for token in solver_id.split("_"):
+            if token.lower() == "ga":
+                tokens.append("GA")
+            elif token.lower() == "maxrects":
+                tokens.append("MaxRects")
+            elif token.lower() == "skyline":
+                tokens.append("Skyline")
+            else:
+                tokens.append(token.title())
+        return " ".join(tokens)
 
     def _on_table_selection_changed(self, type_id: int) -> None:
         self._scene.highlight_type(type_id, mode="selected")
