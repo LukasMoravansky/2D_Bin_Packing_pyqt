@@ -98,6 +98,63 @@ Files follow `schema_version: 1`.
 
 Load/save from the GUI via **Load JSON…** / **Save JSON…**.
 
+## Solution export (JSON log)
+
+After a successful run, you can export the computed solution from the **Visualization** panel using **Export Solution (JSON)…**.
+
+- The button is enabled only when a fresh solution exists.
+- If inputs change after a run, export is disabled until the solver is run again.
+- Export is also disabled while the solver is running.
+
+The exported file follows `schema_version: 1` and includes:
+
+- placed piece coordinates (`x`, `y`)
+- piece orientation (`rotated`)
+- placed and unplaced counts
+- solve time
+- area utilization percentage
+
+Example:
+
+```json
+{
+  "schema_version": 1,
+  "kind": "solution",
+  "meta": {
+    "exported_at_utc": "2026-03-26T09:45:12.345678+00:00",
+    "solver_id": "ga_maxrects",
+    "scenario_name": "sample_01.json"
+  },
+  "bin": {
+    "W": 1200.0,
+    "H": 800.0,
+    "g": 5.0
+  },
+  "summary": {
+    "placed_count": 12,
+    "unplaced_count": 1,
+    "unplaced_by_type": {
+      "3": 1
+    },
+    "solve_time_s": 0.1423,
+    "utilization_pct": 87.54,
+    "used_area": 840000.0,
+    "unused_area": 120000.0
+  },
+  "placed": [
+    {
+      "type_id": 0,
+      "instance_index": 0,
+      "x": 0.0,
+      "y": 0.0,
+      "width": 300.0,
+      "height": 200.0,
+      "rotated": false
+    }
+  ]
+}
+```
+
 ## Tests
 
 ```bash
