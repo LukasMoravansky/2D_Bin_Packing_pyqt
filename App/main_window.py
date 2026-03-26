@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from pathlib import Path
 
-from PyQt5.QtCore import QObject, Qt, pyqtSignal
+from PyQt5.QtCore import QEvent, QObject, Qt, pyqtSignal
 from PyQt5.QtWidgets import (
     QFileDialog,
     QFormLayout,
@@ -98,6 +98,7 @@ class MainWindow(QMainWindow):
         for sp in (self._spin_w, self._spin_h, self._spin_g):
             sp.setRange(0.0, 1e9)
             sp.setDecimals(2)
+            sp.installEventFilter(self)
         self._spin_w.setValue(1200.0)
         self._spin_h.setValue(800.0)
         self._spin_g.setValue(5.0)
@@ -135,9 +136,11 @@ class MainWindow(QMainWindow):
         item_btn_row.setContentsMargins(0, 0, 0, 0)
         btn_add_type = QPushButton("Add type")
         btn_add_type.setObjectName("btnSecondary")
+        btn_add_type.setMinimumWidth(112)
         btn_add_type.clicked.connect(self._table.add_row)
         btn_remove_type = QPushButton("Remove selected")
         btn_remove_type.setObjectName("btnSecondary")
+        btn_remove_type.setMinimumWidth(146)
         btn_remove_type.clicked.connect(self._table.remove_selected_row)
         item_btn_row.addWidget(btn_add_type)
         item_btn_row.addWidget(btn_remove_type)
@@ -244,6 +247,13 @@ class MainWindow(QMainWindow):
         super().showEvent(event)
         self._apply_item_split_constraints()
         self._layout_kpi_cards()
+
+    def eventFilter(self, watched: QObject, event: QEvent) -> bool:
+        if watched in (self._spin_w, self._spin_h, self._spin_g) and event.type() == QEvent.Wheel:
+            # Prevent accidental pallet value edits while scrolling.
+            event.ignore()
+            return True
+        return super().eventFilter(watched, event)
 
     def _build_problem(self) -> PackingProblem:
         d = {

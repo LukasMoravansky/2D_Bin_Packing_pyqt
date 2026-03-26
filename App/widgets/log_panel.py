@@ -19,6 +19,7 @@ class LogPanel(QWidget):
         self._text.setMinimumHeight(120)
         btn_clear = QPushButton("Clear Logger")
         btn_clear.setObjectName("btnSecondary")
+        btn_clear.setMinimumWidth(128)
         btn_clear.clicked.connect(self._on_clear)
 
         row = QHBoxLayout()

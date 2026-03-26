@@ -68,6 +68,10 @@ class BinItemTable(QWidget):
     def eventFilter(self, watched: QObject, event: QEvent) -> bool:
         if watched is self._table.viewport() and event.type() == QEvent.Leave:
             self.hover_changed.emit(-1)
+        if isinstance(watched, QAbstractSpinBox) and event.type() == QEvent.Wheel:
+            # Prevent accidental value changes while scrolling over table inputs.
+            event.ignore()
+            return True
         return super().eventFilter(watched, event)
 
     def add_row(self) -> None:
@@ -84,6 +88,7 @@ class BinItemTable(QWidget):
                 spin.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
                 spin.setButtonSymbols(QAbstractSpinBox.NoButtons)
                 spin.setKeyboardTracking(False)
+                spin.installEventFilter(self)
                 spin.valueChanged.connect(lambda *_: self.changed.emit())
                 self._table.setCellWidget(r, c, self._wrap_cell_widget(spin))
             elif c == 2:
@@ -94,6 +99,7 @@ class BinItemTable(QWidget):
                 iq.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
                 iq.setButtonSymbols(QAbstractSpinBox.NoButtons)
                 iq.setKeyboardTracking(False)
+                iq.installEventFilter(self)
                 iq.valueChanged.connect(lambda *_: self.changed.emit())
                 self._table.setCellWidget(r, c, self._wrap_cell_widget(iq))
             else:

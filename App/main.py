@@ -216,7 +216,8 @@ QPushButton#btnPrimary:disabled {
   border: 1px solid #BFC4BF;
 }
 QPushButton#btnSecondary {
-  min-height: 38px;
+  min-height: 36px;
+  padding: 0 14px;
   border-radius: 10px;
   font-weight: 600;
   color: #171A1C;
