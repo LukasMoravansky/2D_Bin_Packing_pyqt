@@ -25,6 +25,18 @@ The benchmark assignment and evaluation framework is documented in `docs/Benchma
 - **UI focus:** significant effort was spent on front-end polish in PyQt, including critique-driven iteration
 - **Historical note:** `src/solver/skyline.py` came from the early one-shot build phase and is intentionally kept as a baseline/legacy solver
 
+### Visual reference credit
+
+For UI direction, agents/subagents used the following image as a **visual target** and iteratively tried to reduce the gap between the current PyQt GUI and the target style:
+
+- [D-Module Construction Management Platform (Dribbble)](https://dribbble.com/shots/27204733-D-Module-Construction-Management-Platform)
+
+Important context:
+
+- agents did **not** have access to source HTML/CSS or implementation code for the referenced page
+- they worked only from the image and from feedback on current GUI shortcomings at each iteration step
+- changes were applied to a **PyQt desktop app**, which is generally a harder transfer path than reusing existing web page code directly
+
 ### Transparency note
 
 Most of the code was intentionally AI-generated and then iteratively corrected/refined by me.  
