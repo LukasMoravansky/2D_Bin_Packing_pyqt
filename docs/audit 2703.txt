@@ -1,0 +1,46 @@
+Audit jsem provedl proti zadání z docs/Benchmark AI nástrojů - Stručné zadání a hodnotící rámec .pdf, zkontroloval klíčové části aplikace i dokumentaci a doplnil komentáře do kódu.
+
+Co jsem ověřil
+Spuštění validačního skriptu: python verify.py -> OK
+Testy: python -m pytest Tests -> 24/24 passed
+Kontrola souladu: funkční požadavky, GUI prvky, logger, struktura repa, instalační/verify skripty, README
+Výsledek auditu a známka
+Celkové hodnocení: 1- (A-)
+Projekt je ve velmi dobrém stavu a z většiny splňuje zadání.
+Je vidět modularita (App/ vs src/), validace vstupů, asynchronní běh solveru, logování i testy.
+Soulad se zadáním (stručně)
+Funkční část 2D single-bin: splněno (bez překryvů, gap, validace, partial řešení, unplaced report).
+Lexikografický cíl: splněno (max placed, potom min unused area).
+Požadované výstupy: splněno (souřadnice, orientace, počty, čas, utilization).
+GUI požadavky: splněno (Run, Reset Scene, Clear Logger, vstupy pro bin + itemy, add/remove typů, JSON load/save, vizualizace).
+System logger: splněno (čas, level, INFO/WARN/ERROR, klíčové události, clear).
+Technické požadavky: Python 3.10+, PyQt5, veřejný GitHub, testy, instalační skripty, verify skript: splněno.
+Struktura repa: požadované složky máš (App, src, Data, Example, images, Tests).
+Slabiny projektu
+README screenshot není finální: odkazuje na images/gui_screenshot.png, ale soubor chybí a je tam placeholder text.
+README / instalace: v “Option A” je conda activate i když je to “pip quick”; může to působit nejednoznačně.
+Docstring coverage: byla slušná, ale ne všude dost explicitně vysvětlující “proč”. Teď jsem to zlepšil v klíčových třídách.
+Vizuální odlišení neumístěných položek: neumístěné položky jsou dobře reportované (KPI/log), ale vizuální odlišení v canvasu je spíš minimální.
+Doporučení pro opravy (priorita)
+P1: Doplň reálný screenshot GUI do images/gui_screenshot.png a smaž placeholder poznámku.
+P1: Lehce zpřesni README instalaci (oddělit čistý pip flow vs conda flow).
+P2: Do README přidej krátkou sekci “Compliance with benchmark requirements” (1 checklist tabulka).
+P2: Zvaž vizuální panel “Unplaced items” vedle canvasu (nebo výraznější badge/list), aby to bylo ještě auditně čitelnější.
+P3: Doplnit 1-2 integrační testy přes JSON load -> run -> export (end-to-end).
+Co jsem upravil v kódu (komentáře/docstringy)
+Dopsal jsem přehledové komentáře a docstringy, aby bylo jasné, co dělají klíčové třídy a orchestrace:
+
+App/main_window.py
+src/solver/interface.py
+src/solver/ga_solver/solver.py
+src/solver/maxrects_solver/solver.py
+src/solver/skyline_solver/solver.py
+Zaměřil jsem se na:
+
+odpovědnosti tříd,
+tok dat GUI -> validace -> solver -> vizualizace,
+lexikografické vyhodnocení,
+fallback logiku a význam jednotlivých kroků solveru.
+Použitý styl komentování je ve směru utility-style čitelnosti, inspirovaný tím, cos poslal jako referenci (Synth_Eye Utilities).
+
+Pokud chceš, v dalším kroku ti rovnou připravím i finální “A4 reflexi práce v Cursoru” v odborném stylu podle hodnoticího rámce (aby šla skoro rovnou odevzdat).

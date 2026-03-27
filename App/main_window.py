@@ -49,6 +49,15 @@ class _LogEmitter(QObject):
 
 
 class MainWindow(QMainWindow):
+    """
+    Main desktop shell for benchmark app.
+
+    Responsibilities:
+    - collect and validate user input,
+    - start/observe async solver execution,
+    - render solution + KPIs,
+    - expose diagnostics via system logger.
+    """
     _LEFT_NON_SPLITTER_RESERVED_HEIGHT = 110
 
     def __init__(self) -> None:
@@ -322,6 +331,7 @@ class MainWindow(QMainWindow):
         return super().eventFilter(watched, event)
 
     def _build_problem(self) -> PackingProblem:
+        """Convert current GUI state into domain-level `PackingProblem`."""
         d = {
             "bin": {"W": self._spin_w.value(), "H": self._spin_h.value(), "g": self._spin_g.value()},
             "items": self._table.to_items_payload(),
@@ -329,6 +339,7 @@ class MainWindow(QMainWindow):
         return build_problem_from_dict(d)
 
     def _on_inputs_changed(self, *, mark_dirty: bool = True) -> None:
+        """Revalidate live input and refresh control state after any edit."""
         if mark_dirty and self._last_solution is not None:
             self._solution_dirty = True
         selected_solver_id = self._selected_solver_id()
@@ -354,6 +365,7 @@ class MainWindow(QMainWindow):
         self._update_export_button_state()
 
     def _on_run(self) -> None:
+        """Validate inputs and run selected solver on a worker thread."""
         if self._solve_thread and self._solve_thread.isRunning():
             return
         selected_solver_id = self._selected_solver_id()
@@ -383,6 +395,7 @@ class MainWindow(QMainWindow):
         self._on_inputs_changed(mark_dirty=False)
 
     def _on_solve_ok(self, sol: object) -> None:
+        """Render successful solve result and update KPI/status surfaces."""
         assert isinstance(sol, PackingSolution)
         self._last_solution = sol
         self._solution_dirty = False
@@ -418,6 +431,7 @@ class MainWindow(QMainWindow):
         QMessageBox.critical(self, "Solve error", msg[:2000])
 
     def _on_reset_scene(self) -> None:
+        """Clear visualization while keeping current inputs unchanged."""
         self._last_solution = None
         self._solution_dirty = False
         try:
@@ -433,6 +447,7 @@ class MainWindow(QMainWindow):
         self._on_inputs_changed()
 
     def _on_load_json(self) -> None:
+        """Load scenario JSON, map values into GUI widgets, and revalidate."""
         path, _ = QFileDialog.getOpenFileName(self, "Load problem JSON", "", "JSON (*.json)")
         if not path:
             return
@@ -466,6 +481,7 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "Load error", str(e))
 
     def _on_save_json(self) -> None:
+        """Persist current GUI inputs to benchmark-compatible problem JSON."""
         path, _ = QFileDialog.getSaveFileName(self, "Save problem JSON", "", "JSON (*.json)")
         if not path:
             return
@@ -479,6 +495,7 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "Save error", str(e))
 
     def _on_export_solution_json(self) -> None:
+        """Export latest up-to-date solution snapshot to JSON log file."""
         if self._last_solution is None:
             QMessageBox.warning(self, "Nothing to export", "Run solver to generate a solution first.")
             self._update_export_button_state()

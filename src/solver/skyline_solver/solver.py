@@ -78,7 +78,14 @@ def _orientations(job: PieceJob) -> list[tuple[float, float, bool]]:
 
 
 class SkylineSolver:
+    """Skyline heuristic baseline using horizontal contour segments."""
+
     def solve(self, problem: PackingProblem) -> PackingSolution:
+        """
+        Sweep jobs over skyline x-candidates and place at lowest feasible y.
+
+        This solver is kept as a comparable baseline against MaxRects/GA.
+        """
         t0 = time.perf_counter()
         b = problem.bin_spec
         gap = b.gap
@@ -119,6 +126,7 @@ class SkylineSolver:
             new_segs: list[tuple[float, float, float]] = []
             for xl, xr, y0 in segments:
                 new_segs.extend(_cut_segment(xl, xr, y0, x, rw, new_top))
+            # Merge adjacent spans with identical height to keep skyline compact.
             segments = _merge_segments(new_segs)
             r = Rect(x, y, rw, rh)
             placed_rects.append(r)

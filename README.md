@@ -4,8 +4,6 @@ Desktop application for **2D single-bin / pallet packing** with a modular **GUI*
 
 ![GUI screenshot](images/gui_screenshot.png)
 
-*(Replace `images/gui_screenshot.png` with a capture of your running application.)*
-
 ## Problem
 
 - One bin (pallet) of size **W × H** (mm).

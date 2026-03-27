@@ -131,6 +131,13 @@ class MaxRectsSolver:
     """
 
     def solve(self, problem: PackingProblem, jobs: Iterable[PieceJob]) -> PackingSolution:
+        """
+        Place jobs in order using bottom-left preference among valid candidates.
+
+        The method maintains a list of maximal free rectangles and updates them
+        after each accepted placement. All candidates are checked against gap
+        and overlap constraints via shared geometry validation.
+        """
         t0 = time.perf_counter()
         b = problem.bin_spec
         gap = b.gap
@@ -166,6 +173,7 @@ class MaxRectsSolver:
                                 best_key = key
 
             if best is None:
+                # Keep partial solutions valid and report unplaced pieces by type.
                 unplaced[job.type_id] = unplaced.get(job.type_id, 0) + 1
                 continue
 

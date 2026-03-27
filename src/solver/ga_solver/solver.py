@@ -43,6 +43,9 @@ class GAMaxRectsSolver:
     """
     Genetic algorithm that evolves piece order permutations and decodes every
     individual via the existing MaxRects solver.
+
+    GA never places geometry directly. It only searches for a better sequence
+    of piece-placement jobs and delegates geometry validity to MaxRects.
     """
 
     def __init__(self, config: GAConfig | None = None) -> None:
@@ -57,6 +60,7 @@ class GAMaxRectsSolver:
             return self._fallback_maxrects(problem)
 
     def _run_ga(self, problem: PackingProblem) -> PackingSolution:
+        """Run bounded-time GA loop and return the best decoded layout."""
         jobs = expand_jobs(problem.item_types)
         if not jobs:
             return self._decoder.solve(problem, [])
@@ -94,6 +98,7 @@ class GAMaxRectsSolver:
             else:
                 stale_gens += 1
                 if stale_gens >= cfg.patience:
+                    # Early stop once improvements plateau for several generations.
                     break
 
             next_population: list[list[int]] = [chrom for chrom, _, _ in scored[:elite_count]]
@@ -120,6 +125,7 @@ class GAMaxRectsSolver:
         pop_size: int,
         rng: random.Random,
     ) -> list[list[int]]:
+        """Seed population using deterministic heuristics, then random diversity."""
         key_to_index = {_job_key(job): idx for idx, job in enumerate(jobs)}
         seen: set[tuple[int, ...]] = set()
         population: list[list[int]] = []
@@ -159,6 +165,7 @@ class GAMaxRectsSolver:
         population: list[list[int]],
         deadline: float,
     ) -> tuple[list[tuple[list[int], Fitness, PackingSolution]], bool]:
+        """Decode each chromosome through MaxRects and collect lexicographic fitness."""
         scored: list[tuple[list[int], Fitness, PackingSolution]] = []
         timed_out = False
         for chrom in population:
@@ -176,6 +183,7 @@ class GAMaxRectsSolver:
         tournament_size: int,
         rng: random.Random,
     ) -> list[int]:
+        """Select one parent via tournament selection (higher fitness wins)."""
         best = scored[rng.randrange(len(scored))][0]
         for _ in range(tournament_size - 1):
             candidate = scored[rng.randrange(len(scored))][0]
@@ -195,6 +203,7 @@ class GAMaxRectsSolver:
     def _order_crossover(
         self, parent_a: list[int], parent_b: list[int], rng: random.Random
     ) -> list[int]:
+        """Order crossover (OX): preserve relative gene order from both parents."""
         n = len(parent_a)
         i, j = sorted((rng.randrange(n), rng.randrange(n)))
         if i == j:
@@ -213,6 +222,7 @@ class GAMaxRectsSolver:
         return [int(g) for g in child]
 
     def _mutate(self, chrom: list[int], mutation_rate: float, rng: random.Random) -> None:
+        """Apply swap or insertion mutation to maintain permutation validity."""
         if len(chrom) < 2 or rng.random() >= mutation_rate:
             return
         i, j = sorted((rng.randrange(len(chrom)), rng.randrange(len(chrom))))
@@ -225,6 +235,7 @@ class GAMaxRectsSolver:
         chrom.insert(i, gene)
 
     def _fallback_maxrects(self, problem: PackingProblem) -> PackingSolution:
+        """Safe deterministic fallback if GA loop fails unexpectedly."""
         best: PackingSolution | None = None
         best_fit: Fitness | None = None
         for jobs in job_orderings_for_search(problem.item_types):

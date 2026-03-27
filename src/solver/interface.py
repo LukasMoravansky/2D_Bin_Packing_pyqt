@@ -10,6 +10,7 @@ from src.solver.registry import DEFAULT_SOLVER_ID, create_solver
 
 
 def _lex_better(a: PackingSolution, b: PackingSolution) -> bool:
+    """Benchmark objective comparator: maximize placed count, then minimize unused area."""
     if a.placed_count != b.placed_count:
         return a.placed_count > b.placed_count
     return a.unused_area < b.unused_area
@@ -25,12 +26,15 @@ def solve(problem: PackingProblem, solver_id: str = DEFAULT_SOLVER_ID) -> Packin
     solver = create_solver(solver_id)
     best: PackingSolution | None = None
     if solver_id == "maxrects":
+        # MaxRects accepts explicit job ordering. Evaluate deterministic order
+        # presets and keep the benchmark-best lexicographic result.
         for jobs in job_orderings_for_search(problem.item_types):
             sol = solver.solve(problem, jobs)
             if best is None or _lex_better(sol, best):
                 best = sol
         assert best is not None
     else:
+        # All other solvers own their internal search/ordering strategy.
         best = solver.solve(problem)
     t1 = time.perf_counter()
     return replace(best, solve_time_s=t1 - t0)
