@@ -2,6 +2,38 @@
 
 Desktop application for **2D single-bin / pallet packing** with a modular **GUI** (`App/`) and **algorithmic core** (`src/`). Targets industrial-style benchmarks: validation, logging, reproducible setup, and tests.
 
+## Benchmark Context (Personal Note)
+
+This repository was built as part of an internal R&D benchmark at [JIC](https://www.jic.cz/cz/), where we compare AI coding tools on the same practical software task.  
+I implemented this version in **Cursor**.
+
+The benchmark assignment and evaluation framework is documented in `docs/Benchmark AI nástrojů - Stručné zadání a hodnotící rámec .pdf`.
+
+### Why this repository exists
+
+- compare AI-assisted development workflows in a realistic industrial-style task
+- improve my own skills in working with Cursor and large project context
+- document what "vibe coding" looks like in practice for a PyQt desktop app
+
+### AI workflow used in this implementation
+
+- **Cursor plan/build workflow:** first-shot planning and initial build were done with Composer 2
+- **Cursor tier:** Pro
+- **Agent usage:** additional agent calls were mostly in Auto mode
+- **Process assets:** visual feedback loops were done manually from GUI screenshots; annotated iterations are in `images/temp/`
+- **Custom AI setup:** project-specific rules, skills, and a subagent were created in `.cursor/`
+- **UI focus:** significant effort was spent on front-end polish in PyQt, including critique-driven iteration
+- **Historical note:** `src/solver/skyline.py` came from the early one-shot build phase and is intentionally kept as a baseline/legacy solver
+
+### Transparency note
+
+Most of the code was intentionally AI-generated and then iteratively corrected/refined by me.  
+That is not a side effect, but the core purpose of this benchmark: evaluate practical strengths and limits of AI-assisted development.
+
+---
+
+## Application Overview
+
 ![GUI screenshot](images/gui_screenshot.png)
 
 ## Problem
@@ -18,9 +50,12 @@ If not everything fits, the solver returns a **valid partial** layout and **unpl
 
 ## Requirements
 
-- **Python** 3.10+
-- **PyQt5** (GUI)
-- **pytest** (only needed to run tests)
+- **Python** 3.10+ (recommended: 3.11)
+- **pip** (for dependency installation)
+- **OS:** Windows / Linux / macOS
+
+> Note: project dependencies are pinned in `requirements.txt`.
+> `pytest` is only required when running the test suite.
 
 ## Installation
 
