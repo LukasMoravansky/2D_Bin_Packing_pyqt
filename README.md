@@ -20,23 +20,54 @@ If not everything fits, the solver returns a **valid partial** layout and **unpl
 
 - **Python** 3.10+
 - **PyQt5** (GUI)
-- **pytest** (tests, optional for end users)
+- **pytest** (only needed to run tests)
 
 ## Installation
 
-### Option A: pip (quick)
+Choose **one** setup path below.
 
-```bash
-conda activate 2d-bin-packing
-pip install -r requirements.txt
+### Option A: venv + pip (cross-platform)
+
+1. Create and activate virtual environment:
+
+**Windows (PowerShell):**
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
 ```
 
-### Option B: Conda (scripts from benchmark spec)
+**Linux/macOS (bash/zsh):**
 
-- **Windows**: run `install.bat` (creates env `2d-bin-packing`, installs dependencies).
-- **Linux/macOS**: `chmod +x install.sh && ./install.sh`
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
 
-Then activate the environment and verify:
+### Option B: Conda via benchmark scripts
+
+These scripts create environment `2d-bin-packing` and install dependencies.
+
+- **Windows:** run:
+
+```bat
+install.bat
+conda activate 2d-bin-packing
+```
+
+- **Linux/macOS:** run:
+
+```bash
+chmod +x install.sh
+./install.sh
+conda activate 2d-bin-packing
+```
+
+### Verify environment
 
 ```bash
 python verify.py
@@ -44,10 +75,16 @@ python verify.py
 
 ## Run
 
-From the repository root (so `App` and `src` resolve on `sys.path`):
+From the repository root (important, so `App` and `src` resolve correctly):
 
 ```bash
 python -m App.main
+```
+
+## Run tests
+
+```bash
+python -m pytest Tests
 ```
 
 ## Project layout
@@ -151,12 +188,6 @@ Example:
     }
   ]
 }
-```
-
-## Tests
-
-```bash
-python -m pytest Tests
 ```
 
 ## Architecture notes
