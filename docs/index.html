@@ -82,11 +82,15 @@ p,li{font-family:var(--mono);font-size:.82rem;line-height:1.8;color:var(--tx2)}
 .demo-btn{font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;padding:.3rem .8rem;border:1px solid var(--bd2);background:transparent;color:var(--tx2);cursor:pointer;border-radius:1px;transition:all .2s}
 .demo-btn:hover{border-color:var(--ac);color:var(--ac)}
 .demo-area{width:100%;aspect-ratio:3/2;position:relative;background:var(--bg);cursor:default}
-.demo-area .da-grid{position:absolute;inset:6px;border:1px dashed var(--bd2)}
-.demo-area .da-box{position:absolute;border-radius:1px;cursor:grab;display:flex;align-items:center;justify-content:center;font-size:.5rem;color:rgba(255,255,255,.4);user-select:none;transition:box-shadow .15s ease}
+.demo-area .da-grid{position:absolute;inset:6px 38% 6px 6px;border:1px dashed var(--bd2)}
+.demo-area .da-staging{position:absolute;inset:6px 6px 6px 62%;background:var(--bg-r);border-left:1px dashed var(--bd2);pointer-events:none;box-sizing:border-box}
+.demo-area .da-staging-label{display:block;text-align:center;font-size:.55rem;color:var(--tx3);letter-spacing:.12em;text-transform:uppercase;padding-top:6px;line-height:1;pointer-events:none}
+.demo-area .da-box{position:absolute;min-width:24px;min-height:24px;border-radius:1px;cursor:grab;display:flex;align-items:center;justify-content:center;font-size:.5rem;color:rgba(255,255,255,.4);user-select:none;transition:box-shadow .15s ease,border-color .15s ease}
 .demo-area .da-box.dragging{cursor:grabbing;z-index:10;box-shadow:0 0 16px rgba(215,25,33,.3)}
-.demo-bottom{padding:.6rem 1.2rem;border-top:1px solid var(--bd);display:flex;justify-content:space-between;font-size:.6rem;color:var(--tx3)}
+.demo-area .da-box.da-box-conflict{box-shadow:0 0 18px rgba(215,25,33,.7), inset 0 0 10px rgba(215,25,33,.12);border-color:rgba(215,25,33,.9) !important;z-index:5}
+.demo-bottom{padding:.6rem 1.2rem;border-top:1px solid var(--bd);display:flex;justify-content:space-between;align-items:flex-start;gap:.75rem;flex-wrap:wrap;font-size:.6rem;color:var(--tx3)}
 .demo-bottom .db-val{color:var(--grn);font-weight:500}
+.demo-bottom .db-conflict{color:var(--grn);font-weight:500}
 
 /* CURSOR */
 .cursor-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;margin-top:2.5rem;background:var(--bd);border:1px solid var(--bd);border-radius:2px;overflow:hidden}
@@ -259,11 +263,15 @@ p,li{font-family:var(--mono);font-size:.82rem;line-height:1.8;color:var(--tx2)}
       </div>
       <div class="demo-box reveal reveal-d2">
         <div class="demo-top"><span>Interactive Demo</span><button class="demo-btn" id="demoReset">RESET</button></div>
-        <div class="demo-area" id="demoArea"><div class="da-grid"></div></div>
+        <div class="demo-area" id="demoArea">
+          <div class="da-grid" id="demoGrid"></div>
+          <div class="da-staging" aria-hidden="true"><span class="da-staging-label">PIECES</span></div>
+        </div>
         <div class="demo-bottom">
-          <span>PLACED <span class="db-val" id="demoPlaced">0/6</span></span>
+          <span>PLACED <span class="db-val" id="demoPlaced">0/7</span></span>
           <span>UTIL <span class="db-val" id="demoUtil">0%</span></span>
-          <span style="font-style:italic">drag boxes onto pallet</span>
+          <span>CONFLICTS: <span class="db-val db-conflict" id="demoConflicts">0</span></span>
+          <span style="font-style:italic;margin-left:auto">← drag pieces to pallet</span>
         </div>
       </div>
     </div>
@@ -290,7 +298,7 @@ p,li{font-family:var(--mono);font-size:.82rem;line-height:1.8;color:var(--tx2)}
   <div class="container">
     <div class="section-tag reveal">03 — The Challenge</div>
     <h2 class="reveal">Why is the GUI the hardest part?</h2>
-    <p class="reveal reveal-d1" style="max-width:650px;margin-top:.5rem">AI models trained on massive amounts of web code can produce beautiful websites easily. This project required PyQt5 — a desktop framework with far less training data and no visual feedback loop.</p>
+    <p class="reveal reveal-d1" style="max-width:650px;margin-top:.5rem">GUI stands for <em>Graphical User Interface</em> — what users actually see and click. AI models trained on massive amounts of web code can produce beautiful websites easily. This project required PyQt5 — a Python library for building native desktop apps (programs installed and running on your computer, not in a browser) — with far less training data and no visual feedback loop.</p>
     <div class="ch-grid">
       <div class="ch-cell ch-easy reveal reveal-d2">
         <div class="ch-tag">✓ Web (HTML/CSS/JS)</div>
@@ -541,18 +549,175 @@ p,li{font-family:var(--mono);font-size:.82rem;line-height:1.8;color:var(--tx2)}
 })();
 
 (function(){
-  var area=document.getElementById('demoArea');if(!area)return;
-  var defs=[{pw:30,ph:20,bg:'rgba(215,25,33,.22)',bd:'rgba(215,25,33,.4)'},{pw:20,ph:25,bg:'rgba(74,158,255,.18)',bd:'rgba(74,158,255,.35)'},{pw:25,ph:15,bg:'rgba(0,255,136,.18)',bd:'rgba(0,255,136,.35)'},{pw:15,ph:15,bg:'rgba(255,204,0,.18)',bd:'rgba(255,204,0,.35)'},{pw:18,ph:12,bg:'rgba(180,100,255,.18)',bd:'rgba(180,100,255,.35)'},{pw:12,ph:18,bg:'rgba(215,25,33,.15)',bd:'rgba(215,25,33,.3)'}];
+  var area=document.getElementById('demoArea');
+  var grid=document.getElementById('demoGrid');
+  if(!area||!grid)return;
+  var PAL=0.62;
+  var GAP=6;
+  var LABH=20;
+  var cols=['rgba(215,25,33,.22)','rgba(74,158,255,.18)','rgba(0,255,136,.18)','rgba(255,204,0,.18)','rgba(180,100,255,.18)','rgba(215,25,33,.15)','rgba(74,158,255,.15)'];
+  var bds=['rgba(215,25,33,.4)','rgba(74,158,255,.35)','rgba(0,255,136,.35)','rgba(255,204,0,.35)','rgba(180,100,255,.35)','rgba(215,25,33,.3)','rgba(74,158,255,.3)'];
+  var raw=[{pw:55,ph:40},{pw:44,ph:40},{pw:60,ph:32},{pw:40,ph:32},{pw:50,ph:26},{pw:34,ph:26},{pw:22,ph:28}];
+  var areaSum=raw.reduce(function(s,b){return s+(b.pw*b.ph)/1e4},0);
+  var sf=Math.sqrt(0.86/areaSum);
+  var defs=raw.map(function(b,i){
+    var pw=Math.round(b.pw*sf),ph=Math.round(b.ph*sf);
+    var lbl=b.pw+'×'+b.ph;
+    return{lbl:lbl,pw:pw,ph:ph,bg:cols[i%cols.length],bd:bds[i%bds.length]}
+  });
   var items=[];
-  function build(){items.forEach(function(i){i.el.remove()});items=[];var aw=area.offsetWidth,ah=area.offsetHeight,pad=6;
-    defs.forEach(function(d,i){var el=document.createElement('div');el.className='da-box';var w=d.pw/100*(aw-pad*2),h=d.ph/100*(ah-pad*2);el.style.cssText='width:'+w+'px;height:'+h+'px;background:'+d.bg+';border:1px solid '+d.bd+';left:'+(aw-w-4)+'px;top:'+(pad+i*14)+'px';el.textContent=d.pw+'x'+d.ph;area.appendChild(el);items.push({el:el,def:d,placed:false})});drag();stats()}
-  function drag(){items.forEach(function(item){var sx,sy,ox,oy;
-    function down(e){e.preventDefault();var ev=e.touches?e.touches[0]:e;sx=ev.clientX;sy=ev.clientY;ox=parseFloat(item.el.style.left);oy=parseFloat(item.el.style.top);item.el.classList.add('dragging');document.addEventListener('mousemove',move);document.addEventListener('mouseup',up);document.addEventListener('touchmove',move,{passive:false});document.addEventListener('touchend',up)}
-    function move(e){e.preventDefault();var ev=e.touches?e.touches[0]:e;item.el.style.left=(ox+ev.clientX-sx)+'px';item.el.style.top=(oy+ev.clientY-sy)+'px'}
-    function up(){item.el.classList.remove('dragging');document.removeEventListener('mousemove',move);document.removeEventListener('mouseup',up);document.removeEventListener('touchmove',move);document.removeEventListener('touchend',up);var bx=parseFloat(item.el.style.left),by=parseFloat(item.el.style.top),bw=item.el.offsetWidth,bh=item.el.offsetHeight,pad=6;item.placed=bx>=pad-5&&by>=pad-5&&bx+bw<=area.offsetWidth-pad+5&&by+bh<=area.offsetHeight-pad+5;stats()}
-    item.el.addEventListener('mousedown',down);item.el.addEventListener('touchstart',down,{passive:false})})}
-  function stats(){var n=items.filter(function(i){return i.placed}).length;var pad=6,pa=(area.offsetWidth-pad*2)*(area.offsetHeight-pad*2);var ua=items.filter(function(i){return i.placed}).reduce(function(s,i){return s+i.el.offsetWidth*i.el.offsetHeight},0);document.getElementById('demoPlaced').textContent=n+'/'+defs.length;document.getElementById('demoUtil').textContent=(pa>0?Math.round(ua/pa*100):0)+'%'}
-  document.getElementById('demoReset').addEventListener('click',build);setTimeout(build,400)
+
+  function getRect(el){
+    var x=parseFloat(el.style.left);if(isNaN(x))x=0;var y=parseFloat(el.style.top);if(isNaN(y))y=0;return{x:x,y:y,w:el.offsetWidth,h:el.offsetHeight};
+  }
+
+  function overlaps(a,b){return Math.max(a.x,b.x)<Math.min(a.x+a.w,b.x+b.w)&&Math.max(a.y,b.y)<Math.min(a.y+a.h,b.y+b.h)}
+
+  function palletRect(){
+    return{x:grid.offsetLeft,y:grid.offsetTop,w:grid.offsetWidth,h:grid.offsetHeight};
+  }
+
+  function rectInside(a,z){return a.x>=z.x&&a.y>=z.y&&a.x+a.w<=z.x+z.w&&a.y+a.h<=z.y+z.h}
+
+  function bx(i,gw,gh){return{w:defs[i].pw/100*gw,h:defs[i].ph/100*gh}}
+
+  function stagingLayout(){
+    var aw=area.offsetWidth,ah=area.offsetHeight;
+    var gx=grid.offsetLeft,gy=grid.offsetTop,gw=grid.offsetWidth,gh=grid.offsetHeight;
+    var pad=GAP;
+    var stagL=PAL*aw;
+    var y0=pad+LABH;
+    var stagInnerW=Math.max(32,aw-stagL-pad*2);
+    var n=defs.length;
+    var positions=[];
+
+    function gapFor(stackH,count){
+      var avail=Math.max(0,ah-y0-pad);if(count<=0)return GAP;if(stackH+count*GAP<=avail)return GAP;var g=(avail-stackH)/count;return isFinite(g)?Math.max(2,Math.min(GAP,g)):GAP;
+    }
+
+    function stack(ids,laneLeft,laneWide){
+      var hh=ids.reduce(function(s,i){return s+bx(i,gw,gh).h},0);
+      var gEff=gapFor(hh,Math.max(0,ids.length-1));
+      var cy=y0;
+      ids.forEach(function(i){var q=bx(i,gw,gh);positions[i]={x:laneLeft+(laneWide-q.w)/2,y:cy};cy+=q.h+gEff});
+    }
+
+    var il=[0,1,2,3],ir=[4,5,6];
+    var mwL=il.reduce(function(m,i){return Math.max(m,bx(i,gw,gh).w)},0);
+    var mwR=ir.reduce(function(m,i){return Math.max(m,bx(i,gw,gh).w)},0);
+    var gutter=GAP;var half=(stagInnerW-gutter)/2;
+    var useDual=mwL<=half+0.75&&mwR<=half+0.75;
+    if(useDual){
+      var leftLane=stagL+pad;var rightLane=stagL+pad+half+gutter;
+      stack(il,leftLane,half);stack(ir,rightLane,half);
+    }else{
+      var totalH=n?defs.reduce(function(s,d){return s+d.ph/100*gh},0):0;
+      var gEff=gapFor(totalH,Math.max(0,n-1));
+      var cy=y0;
+      for(var i=0;i<n;i++){
+        var q=bx(i,gw,gh);
+        positions[i]={x:stagL+pad+(stagInnerW-q.w)/2,y:cy};
+        cy+=q.h+gEff;
+      }
+    }
+
+    return{gx:gx,gy:gy,gw:gw,gh:gh,positions:positions};
+  }
+
+  function applyLayout(){
+    var aw=area.offsetWidth,ah=area.offsetHeight;
+    items.forEach(function(item){
+      var w=item.nw*aw,h=item.nh*ah;
+      var x=Math.min(item.nx*aw, aw-w);
+      var y=Math.min(item.ny*ah, ah-h);
+      item.el.style.left=x+'px';
+      item.el.style.top=y+'px';
+      item.el.style.width=w+'px';
+      item.el.style.height=h+'px';
+    });
+  }
+
+  function build(){
+    if(area.offsetWidth<10){
+      setTimeout(build,200);
+      return;
+    }
+    items.forEach(function(it){it.el.remove()});
+    items=[];
+    var L=stagingLayout();
+    var aw=area.offsetWidth,ah=area.offsetHeight;
+    defs.forEach(function(d,i){
+      var el=document.createElement('div');
+      el.className='da-box';
+      var w=d.pw/100*L.gw,h=d.ph/100*L.gh;
+      var p=L.positions[i];
+      var px=p?p.x:L.gx+L.gw+GAP;var py=p?p.y:L.gy;
+      el.style.cssText='background:'+d.bg+';border:1px solid '+d.bd;
+      el.textContent=d.lbl;
+      area.appendChild(el);
+      items.push({el:el,def:d,nw:w/aw,nh:h/ah,nx:px/aw,ny:py/ah});
+    });
+    bindDrag();
+    applyLayout();
+    refreshOverlapAndStats();
+  }
+
+  function refreshOverlapAndStats(){
+    var rects=items.map(function(it){return getRect(it.el)});
+    var n=items.length;
+    var conflictIdx=new Array(n);
+    var i,j,pairCount=0;
+    for(i=0;i<n;i++)conflictIdx[i]=false;
+    for(i=0;i<n;i++){
+      for(j=i+1;j<n;j++){
+        if(overlaps(rects[i],rects[j])){
+          pairCount++;
+          conflictIdx[i]=true;
+          conflictIdx[j]=true;
+        }
+      }
+    }
+    for(i=0;i<n;i++){
+      if(conflictIdx[i])items[i].el.classList.add('da-box-conflict');
+      else items[i].el.classList.remove('da-box-conflict');
+    }
+    var z=palletRect();
+    var placed=0,utilA=0;
+    for(i=0;i<n;i++){
+      var r=rects[i];
+      if(rectInside(r,z)&&!conflictIdx[i]){placed++;utilA+=r.w*r.h}
+    }
+    var pa=z.w*z.h;
+    document.getElementById('demoPlaced').textContent=placed+'/7';
+    document.getElementById('demoUtil').textContent=(pa>0?Math.round(utilA/pa*100):0)+'%';
+    var ce=document.getElementById('demoConflicts');
+    ce.textContent=String(pairCount);
+    ce.style.color=pairCount>0?'var(--ac)':'var(--grn)';
+  }
+
+  function bindDrag(){
+    items.forEach(function(item){var sx,sy,ox,oy;
+      function down(e){e.preventDefault();var ev=e.touches?e.touches[0]:e;sx=ev.clientX;sy=ev.clientY;var g=getRect(item.el);ox=g.x;oy=g.y;item.el.classList.add('dragging');document.addEventListener('mousemove',move);document.addEventListener('mouseup',up);document.addEventListener('touchmove',move,{passive:false});document.addEventListener('touchend',up)}
+      function move(e){e.preventDefault();var ev=e.touches?e.touches[0]:e;item.el.style.left=(ox+ev.clientX-sx)+'px';item.el.style.top=(oy+ev.clientY-sy)+'px';refreshOverlapAndStats()}
+      function up(){item.el.classList.remove('dragging');document.removeEventListener('mousemove',move);document.removeEventListener('mouseup',up);document.removeEventListener('touchmove',move);document.removeEventListener('touchend',up);item.nx=parseFloat(item.el.style.left)/area.offsetWidth;item.ny=parseFloat(item.el.style.top)/area.offsetHeight;refreshOverlapAndStats()}
+      item.el.addEventListener('mousedown',down);item.el.addEventListener('touchstart',down,{passive:false})
+    })
+  }
+
+  var resizeTimer=null;
+  window.addEventListener('resize',function(){
+    clearTimeout(resizeTimer);
+    resizeTimer=setTimeout(function(){applyLayout();refreshOverlapAndStats();},80);
+  });
+
+  area.addEventListener('touchmove',function(e){
+    if(items.some(function(it){return it.el.classList.contains('dragging')})){
+      e.preventDefault();
+    }
+  },{passive:false});
+
+  document.getElementById('demoReset').addEventListener('click',build);
+  setTimeout(build,400);
 })();
 
 (function(){
