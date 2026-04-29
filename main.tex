@@ -1,0 +1,438 @@
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[czech]{babel}
+\usepackage{geometry}
+\usepackage{enumitem}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{tikz}
+\usetikzlibrary{patterns}
+
+% --- Spacing (compact, professional) ---
+\setlength{\parskip}{3pt}
+\setlength{\parindent}{0pt}
+
+\setlist[itemize]{itemsep=1pt, topsep=2pt, parsep=0pt, partopsep=0pt}
+\setlist[enumerate]{itemsep=1pt, topsep=2pt, parsep=0pt, partopsep=0pt}
+
+\usepackage{titlesec}
+\titlespacing*{\section}{0pt}{6pt}{4pt}
+\titlespacing*{\subsection}{0pt}{5pt}{3pt}
+\titlespacing*{\subsubsection}{0pt}{4pt}{2pt}
+
+\setlength{\textfloatsep}{8pt}
+\setlength{\intextsep}{6pt}
+\setlength{\floatsep}{6pt}
+\geometry{margin=2.0cm}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    urlcolor=black
+}
+
+\title{
+\textbf{\Large Benchmark AI nástrojů pro vývoj průmyslové aplikace}\\
+{\large 2D Paletizace (Single-Bin, Python 3.10+, PyQt5)}
+}
+
+\author{
+Roman Parák, JIC Smart Factory
+}
+
+\date{\today
+}
+
+
+\begin{document}
+
+\pagestyle{plain}
+
+\maketitle
+
+%-------------------------------------------------
+\section{Účel benchmarku}
+
+Cílem benchmarku je objektivně porovnat vybrané AI nástroje při vývoji realistické průmyslové aplikace.
+
+Každý člen týmu implementuje aplikaci řešící problém \textbf{2D paletizace (2D bin-packing)} na jedné paletě s cílem efektivně využít plochu palety. Aplikace bude obsahovat algoritmické jádro a grafické rozhraní v prostředí PyQt5.
+
+Benchmark proběhne na následujících nástrojích:
+
+\begin{itemize}
+    \item ChatGPT -- Codex
+    \item Cursor
+    \item Claude Code
+\end{itemize}
+
+Výsledkem bude funkční aplikace, zdokumentovaný vývojový proces a strukturované hodnocení AI nástroje.
+
+%-------------------------------------------------
+\subsection{Ilustrace problému 2D paletizace}
+
+Obrázek~\ref{fig:binpacking_schema} schematicky znázorňuje princip
+2D paletizace (single-bin). Obdélník reprezentuje paletu o rozměrech
+$W \times H$. Menší obdélníky představují jednotlivé položky.
+Položky nesmí být v překryvu a musí respektovat minimální
+vzdálenost $g$.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[scale=0.8]
+
+% Paleta
+\draw[thick] (0,0) rectangle (12,8);
+\node at (6,8.5) {Paleta ($W \times H$)};
+
+% Položky
+\draw[fill=gray!20] (0.5,0.5) rectangle (4.5,2.5);
+\draw[fill=gray!20] (5,0.5) rectangle (8.5,3.5);
+\draw[fill=gray!20] (0.5,3) rectangle (3,6);
+\draw[fill=gray!20] (3.5,4) rectangle (7,7);
+
+% Otočená položka
+\draw[fill=gray!20] (7.5,4) rectangle (10.5,6);
+
+% Neumístěná položka (mimo paletu)
+\draw[dashed] (13,3) rectangle (15,5);
+\node at (14,2.5) {Neumístěno};
+
+% Označení mezery g
+\draw[<->] (4.5,1.5) -- (5,1.5);
+\node at (4.75,1.9) {$g$};
+
+\end{tikzpicture}
+\caption{Schematická ilustrace problému 2D paletizace (single-bin).}
+\label{fig:binpacking_schema}
+\end{figure}
+
+%-------------------------------------------------
+\section{Funkční požadavky}
+
+\subsection{Účel a rozsah řešení}
+
+Úkolem je implementovat řešení 2D paletizace na jedné paletě (single-bin).
+
+Cílem je:
+
+\begin{itemize}
+    \item zabránit překryvům položek,
+    \item dodržet minimální mezeru mezi položkami,
+    \item zajistit umístění položek uvnitř palety,
+    \item maximalizovat využití plochy palety.
+\end{itemize}
+
+Řešení může být heuristické. Není požadováno nalezení globálního optima.
+
+%-------------------------------------------------
+\subsection{Vstupní parametry}
+
+\textbf{Paleta (Bin)}
+
+\begin{itemize}
+    \item $W$ -- šířka palety [mm]
+    \item $H$ -- výška palety [mm]
+    \item $g$ -- minimální mezera mezi dvěma položkami [mm]
+\end{itemize}
+
+Omezení:
+
+\begin{enumerate}
+    \item Každá položka musí být umístěna uvnitř oblasti $W \times H$.
+    \item Minimální vzdálenost mezi libovolnými dvěma položkami musí být alespoň $g$.
+    \item Mezera mezi položkou a hranou palety není vyžadována.
+\end{enumerate}
+
+\textbf{Položky (Items)}
+
+Pro typy položek $i = 1, \dots, n$:
+
+\begin{itemize}
+    \item $w_i$ -- šířka footprintu [mm]
+    \item $h_i$ -- výška footprintu [mm]
+    \item $q_i$ -- počet kusů daného typu (libovolné nezáporné celé číslo)
+    \item $rotation_i$ -- povolení rotace o 90°
+\end{itemize}
+
+Je možné definovat libovolný počet kusů stejného typu položky. Aplikace musí umožňovat také scénář s jediným typem položky ($n = 1$), což odpovídá strukturované paletizaci.
+
+Pokud je rotace povolena, lze použít orientaci $(w_i, h_i)$ nebo $(h_i, w_i)$.
+
+%-------------------------------------------------
+\subsubsection*{Validace vstupů}
+
+Aplikace musí:
+
+\begin{itemize}
+    \item odmítnout záporné nebo nulové rozměry položek,
+    \item odmítnout nekonzistentní vstupy (např. položka větší než paleta
+    v obou orientacích),
+    \item informovat uživatele o chybě prostřednictvím GUI
+    a systémového loggeru,
+    \item zabránit spuštění výpočtu při nevalidních datech.
+\end{itemize}
+
+%-------------------------------------------------
+\subsection{Cíl optimalizace}
+
+Optimalizace je definována lexikograficky:
+
+\begin{enumerate}
+    \item maximalizovat počet umístěných kusů,
+    \item mezi řešeními se stejným počtem kusů minimalizovat nevyužitou plochu.
+\end{enumerate}
+
+Nevyužitá plocha je definována jako:
+
+\begin{equation}
+unused\_area = W \cdot H - \sum_i (n_i^{placed} \cdot w_i \cdot h_i)
+\label{eq:unused_area}
+\end{equation}
+
+Pokud nelze umístit všechny položky, aplikace musí vrátit nejlepší validní řešení a reportovat neumístěné položky (typ a množství).
+
+%-------------------------------------------------
+\subsection{Požadovaný výstup}
+
+Aplikace musí poskytovat:
+
+\begin{itemize}
+    \item souřadnice každého umístěného kusu,
+    \item jeho orientaci,
+    \item počet umístěných kusů,
+    \item počet neumístěných kusů,
+    \item výpočetní čas řešení,
+    \item procentuální využití plochy.
+\end{itemize}
+
+%-------------------------------------------------
+\section{Technické požadavky}
+
+\begin{itemize}
+    \item Jazyk: Python 3.10+
+    \item GUI framework: PyQt5
+    \item Modulární architektura (oddělení GUI a logiky)
+    \item Typové anotace a dokumentační řetězce
+    \item Veřejný GitHub repozitář
+\end{itemize}
+
+%-------------------------------------------------
+\subsection{Požadavky na GUI a ovládání aplikace}
+
+Grafické uživatelské rozhraní (GUI) musí být navrženo
+přehledně, stabilně a s jasným oddělením vstupní části,
+vizualizační oblasti a diagnostického výstupu.
+
+\subsubsection*{1. Zadávání vstupních parametrů}
+
+Aplikace musí umožňovat zadání všech vstupních parametrů
+(paleta i položky) přímo prostřednictvím GUI.
+
+GUI musí obsahovat:
+
+\begin{itemize}
+    \item vstupní pole pro rozměry palety ($W$, $H$),
+    \item vstupní pole pro minimální mezeru $g$,
+    \item možnost definovat více typů položek ($w_i$, $h_i$, $q_i$, $rotation_i$),
+    \item možnost přidávání a odebírání typů položek,
+    \item podporu scénáře s jediným typem položky (strukturovaná paletizace).
+\end{itemize}
+
+Alternativně musí aplikace umožňovat načtení vstupních dat
+z konfiguračního souboru (např. ve formátu JSON).
+Formát konfiguračního souboru musí být jednoznačně popsán
+v dokumentaci (README).
+
+Při zadávání parametrů musí být prováděna validace vstupů.
+V případě nevalidních dat nesmí být umožněno spuštění výpočtu
+a uživatel musí být informován prostřednictvím GUI
+a systémového loggeru.
+
+\subsubsection*{2. Ovládací prvky}
+
+GUI musí obsahovat následující základní ovládací prvky:
+
+\begin{itemize}
+    \item \textbf{Run / Start} – spustí výpočet paletizace pro aktuální vstupy,
+    \item \textbf{Reset Scene} – vymaže aktuální vizualizaci a vrátí aplikaci do výchozího stavu,
+    \item \textbf{Clear Logger} – vymaže obsah systémového logu.
+\end{itemize}
+
+Ovládací prvky musí být aktivní pouze v odpovídajícím stavu aplikace
+(např. nelze spustit výpočet při nevalidních datech).
+
+\subsubsection*{3. Vizualizační oblast}
+
+GUI musí obsahovat grafickou oblast, ve které je zobrazena:
+
+\begin{itemize}
+    \item paleta ($W \times H$),
+    \item jednotlivé umístěné položky,
+    \item jejich orientace,
+    \item případné vizuální odlišení neumístěných položek.
+\end{itemize}
+
+Vizualizace musí být čitelná, měřítkově konzistentní
+a musí reflektovat skutečné výstupy algoritmu.
+
+\subsubsection*{4. System Logger}
+
+Aplikace musí obsahovat systémový log (samostatný panel v GUI),
+který zaznamenává běh aplikace a slouží k diagnostice.
+
+Logger musí:
+
+\begin{itemize}
+    \item zobrazovat časovou značku a úroveň zprávy (INFO / WARN / ERROR),
+    \item zaznamenávat klíčové události (načtení dat, spuštění výpočtu, dokončení, metriky),
+    \item zaznamenávat varování (např. částečné řešení, neumístěné položky),
+    \item zaznamenávat chyby a výjimky včetně stručného popisu,
+    \item podporovat reset obsahu pomocí tlačítka \textbf{Clear Logger}.
+\end{itemize}
+
+\subsubsection*{5. Ošetření chyb a stabilita}
+
+GUI musí být robustní a nesmí padat při běžných chybových stavech.
+Veškeré chyby musí být zachyceny a korektně reportovány
+uživateli prostřednictvím dialogu nebo loggeru.
+
+Aplikace musí po chybě zůstat ve stabilním a znovu použitelném stavu.
+
+%-------------------------------------------------
+\section{Struktura projektu}
+
+Repozitář musí mít strukturu:
+
+\begin{itemize}
+    \item App/ -- vstupní bod aplikace (UI)
+    \item src/ -- aplikační logika a algoritmy
+    \item Data/ -- testovací instance a případné výstupy
+    \item Example/ -- benchmark skripty
+    \item images/ -- obrázky do README
+    \item Tests/ -- automatizované testy
+\end{itemize}
+
+Součástí repozitáře musí být také pomocné skripty pro zajištění reprodukovatelného prostředí:
+
+\begin{itemize}
+    \item \textbf{install.sh / install.bat} – automatizovaný instalační skript.
+    
+    Skript musí:
+    \begin{itemize}
+        \item vytvořit nové Conda prostředí,
+        \item nainstalovat Python (min. verze 3.10),
+        \item nainstalovat všechny požadované knihovny,
+        \item umožnit plně funkční spuštění aplikace bez dalších manuálních kroků.
+    \end{itemize}
+
+    \item \textbf{verify.py} – validační skript prostředí.
+    
+    Skript musí:
+    \begin{itemize}
+        \item ověřit verzi Pythonu,
+        \item zkontrolovat dostupnost všech závislostí,
+        \item otestovat import hlavních modulů aplikace,
+        \item potvrdit, že aplikaci lze korektně spustit.
+    \end{itemize}
+\end{itemize}
+
+Cílem těchto skriptů je zajistit plně reprodukovatelné prostředí a bezproblémové spuštění projektu na čistém systému.
+
+%-------------------------------------------------
+\section{Obsah README.md}
+
+Součástí každého repozitáře musí být profesionálně zpracovaný soubor
+\texttt{README.md} v anglickém jazyce. README představuje primární
+vstupní dokument projektu a musí umožnit rychlé pochopení účelu,
+architektury a způsobu použití aplikace bez nutnosti studia zdrojového kódu.
+
+README musí obsahovat zejména:
+
+\begin{itemize}
+    \item jasný a strukturovaný popis projektu a jeho účelu,
+    \item stručný kontext problému 2D paletizace,
+    \item vizuální ukázku aplikace (screenshot GUI),
+    \item systémové požadavky (verze Pythonu, závislosti),
+    \item instalační postup (včetně využití skriptů install.sh / install.bat),
+    \item návod ke spuštění aplikace,
+    \item popis struktury projektu,
+    \item přehled implementovaných algoritmů a jejich principu,
+    \item známá omezení a případné předpoklady řešení.
+\end{itemize}
+
+README musí být psán technicky přesným a profesionálním jazykem
+a musí odpovídat kvalitě běžné open-source dokumentace.
+
+%-------------------------------------------------
+\section{Požadované výstupy}
+
+Každý účastník benchmarku je odpovědný za dodání následujících výstupů:
+
+\begin{enumerate}
+    \item veřejný GitHub repozitář obsahující kompletní zdrojový kód,
+    \item plně funkční aplikaci splňující definované požadavky,
+    \item README dle stanovené specifikace,
+    \item stručnou odbornou reflexi použití AI nástroje (max. 1 strana A4),
+    \item prezentaci výsledků v rozsahu 10--15 minut.
+\end{enumerate}
+
+Reflexe použití AI nástroje má shrnout zkušenosti z vývoje
+a identifikovat přínosy i omezení nástroje v kontextu
+průmyslového vývoje softwaru.
+
+%-------------------------------------------------
+\section{Metodika hodnocení}
+
+Hodnocení probíhá individuálně na základě odborného posouzení.
+Cílem benchmarku není porovnání účastníků mezi sebou,
+ale kvalifikované posouzení jednotlivých AI nástrojů.
+
+Při hodnocení se doporučuje zaměřit zejména na:
+
+\begin{itemize}
+    \item efektivitu spolupráce s nástrojem během vývoje,
+    \item kvalitu a udržitelnost výsledné architektury,
+    \item míru manuálních korekcí oproti generovanému kódu,
+    \item schopnost nástroje pracovat s kontextem projektu,
+    \item celkovou použitelnost nástroje pro průmyslové projekty.
+\end{itemize}
+
+%-------------------------------------------------
+\section{Metodika benchmarku}
+
+Benchmark je realizován formou individuální implementace
+definovaného zadání pomocí různých AI nástrojů.
+Každý účastník zodpovídá za kompletní návrh,
+implementaci, dokumentaci a prezentaci řešení.
+
+Cílem benchmarku není soutěž mezi účastníky,
+ale získání strukturované zkušenosti
+s praktickým využitím jednotlivých AI nástrojů.
+
+%-------------------------------------------------
+\section{Cíl benchmarku}
+
+Cílem benchmarku je získat kvalifikovaný a strukturovaný přehled
+o schopnostech současných AI nástrojů při vývoji průmyslového softwaru.
+
+Benchmark má poskytnout odpovědi na následující otázky:
+
+\begin{itemize}
+    \item Do jaké míry jsou AI nástroje schopny samostatně navrhnout
+    a implementovat modulární aplikaci střední složitosti?
+    \item Jak kvalitní je generovaný kód z hlediska architektury,
+    čitelnosti a rozšiřitelnosti?
+    \item Jaká je reálná míra manuální korekce a zásahů?
+    \item Jak dobře nástroje pracují s kontextem napříč více soubory?
+\end{itemize}
+
+Výsledkem benchmarku má být kvalifikované doporučení
+pro případné budoucí nasazení AI nástrojů v rámci
+vývoje průmyslových projektů.
+
+\end{document}
