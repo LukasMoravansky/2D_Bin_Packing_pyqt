@@ -1,891 +1,449 @@
 <!DOCTYPE html>
-<html lang="cs">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cursor — Prezentace</title>
+<title>2D Bin Packing with Cursor — AI Tool Benchmark</title>
+<meta name="description" content="A case study on AI-assisted development using Cursor IDE. Part of an internal benchmark comparing AI tools for industrial software development.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#000;--bg-r:#080808;--bg-c:#0a0a0a;--bd:#1a1a1a;--bd2:#222;--bd3:#333;--tx:#fff;--tx2:#888;--tx3:#444;--ac:#d71921;--ac-d:rgba(215,25,33,.10);--ac-g:rgba(215,25,33,.3);--grn:#00ff88;--grn-d:rgba(0,255,136,.08);--blu:#4a9eff;--yel:#ffcc00;--mono:'JetBrains Mono',monospace;--sans:'Space Grotesk',sans-serif;--eo:cubic-bezier(.16,1,.3,1);--gs:24px}
+html{scroll-behavior:smooth;scrollbar-width:thin;scrollbar-color:#222 #000}
+body{background:var(--bg);color:var(--tx);font-family:var(--mono);font-weight:400;font-size:14px;line-height:1.7;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+::selection{background:var(--ac);color:#fff}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:#000}::-webkit-scrollbar-thumb{background:#333;border-radius:2px}
+body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(circle,#1a1a1a .8px,transparent .8px);background-size:var(--gs) var(--gs);pointer-events:none;z-index:0;opacity:.5}
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(255,255,255,.008) 2px,rgba(255,255,255,.008) 4px);pointer-events:none;z-index:9998}
+.container{width:min(92%,1140px);margin-inline:auto}
+section{position:relative;z-index:1;padding:clamp(5rem,12vw,10rem) 0}
+section+section::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:min(92%,1140px);height:1px;background:linear-gradient(90deg,transparent,var(--bd2),transparent)}
+h1{font-family:var(--sans);font-size:clamp(2.5rem,6vw + .5rem,5rem);font-weight:700;line-height:.95;letter-spacing:-.05em}
+h2{font-family:var(--sans);font-size:clamp(1.6rem,3vw,2.6rem);font-weight:600;line-height:1.1;letter-spacing:-.04em}
+h3{font-family:var(--sans);font-size:clamp(1rem,1.3vw,1.2rem);font-weight:600;letter-spacing:-.02em}
+p,li{font-family:var(--mono);font-size:.82rem;line-height:1.8;color:var(--tx2)}
+.section-tag{display:inline-flex;align-items:center;gap:.6rem;font-family:var(--mono);font-size:.65rem;font-weight:500;letter-spacing:.15em;text-transform:uppercase;color:var(--ac);margin-bottom:2rem}
+.section-tag::before{content:'';width:24px;height:1px;background:var(--ac)}
+.highlight{color:var(--ac)}
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .7s var(--eo),transform .7s var(--eo)}
+.reveal.visible{opacity:1;transform:translateY(0)}
+.reveal-d1{transition-delay:.08s}.reveal-d2{transition-delay:.16s}.reveal-d3{transition-delay:.24s}.reveal-d4{transition-delay:.32s}
+.card{background:var(--bg-c);border:1px solid var(--bd);border-radius:2px;padding:1.6rem;transition:border-color .3s ease}
+.card:hover{border-color:var(--bd3)}
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+/* HERO */
+.hero{min-height:100vh;display:flex;align-items:center;padding-top:0;padding-bottom:0}
+.hero .container{display:grid;grid-template-columns:1fr 1fr;gap:clamp(2rem,5vw,5rem);align-items:center}
+.hero-content{z-index:2}
+.hero-badge{font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--tx3);margin-bottom:2.5rem;display:flex;align-items:center;gap:.7rem}
+.hero-badge .pulse-dot{width:6px;height:6px;background:var(--ac);border-radius:50%;animation:blink 2s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.hero h1{margin-bottom:1.8rem}
+.hero h1 .line-accent{display:block;color:var(--ac)}
+.hero-desc{font-size:.85rem;color:var(--tx2);max-width:480px;margin-bottom:2.5rem}
+.hero-meta{display:flex;flex-direction:column;gap:.4rem}
+.hero-meta-row{display:flex;gap:.5rem;font-size:.68rem;color:var(--tx3)}
+.hero-meta-row .hm-label{min-width:60px}
+.hero-meta-row .hm-value{color:var(--tx2)}
+.hero-visual{z-index:2}
+.pack-canvas{width:100%;aspect-ratio:4/3;background:var(--bg-r);border:1px solid var(--bd);border-radius:2px;position:relative;overflow:hidden}
+.pack-canvas .pc-grid{position:absolute;inset:16px;border:1px solid var(--bd)}
+.pack-canvas .pc-grid::before{content:'';position:absolute;inset:0;background-image:linear-gradient(var(--bd) 1px,transparent 1px),linear-gradient(90deg,var(--bd) 1px,transparent 1px);background-size:20% 20%;opacity:.3}
+.pack-canvas .pc-box{position:absolute;border-radius:1px;display:flex;align-items:center;justify-content:center;font-size:.5rem;color:rgba(255,255,255,.3);letter-spacing:.05em;opacity:0}
+.pack-canvas .pc-box.placed{opacity:1}
+.pack-readout{position:absolute;bottom:0;left:0;right:0;display:flex;justify-content:space-between;padding:6px 16px;font-size:.6rem;color:var(--tx3);background:rgba(0,0,0,.85);border-top:1px solid var(--bd)}
+.pack-readout .pr-val{color:var(--grn);font-weight:600}
 
-  :root {
-    --bg: #050505;
-    --text: #e8e8e8;
-    --text-dim: #666;
-    --accent: #d71921;
-    --surface: #111;
-    --border: #1a1a1a;
-    --mono: 'JetBrains Mono', monospace;
-    --sans: 'Inter', -apple-system, sans-serif;
-  }
+/* TASK */
+.task-layout{display:grid;grid-template-columns:1fr 1fr;gap:3rem;margin-top:2.5rem}
+.task-text h3{margin-bottom:1rem;margin-top:2rem;color:var(--tx)}
+.task-text h3:first-child{margin-top:0}
+.req-list{display:flex;flex-direction:column;gap:.5rem;margin-top:1rem}
+.req-row{display:flex;gap:.8rem;align-items:baseline;font-size:.78rem}
+.req-row .req-key{color:var(--ac);min-width:90px;flex-shrink:0;font-weight:500}
+.req-row .req-val{color:var(--tx2)}
+.demo-box{background:var(--bg-c);border:1px solid var(--bd);border-radius:2px;overflow:hidden}
+.demo-top{padding:.8rem 1.2rem;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center}
+.demo-top span{font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:var(--tx3)}
+.demo-btn{font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;padding:.3rem .8rem;border:1px solid var(--bd2);background:transparent;color:var(--tx2);cursor:pointer;border-radius:1px;transition:all .2s}
+.demo-btn:hover{border-color:var(--ac);color:var(--ac)}
+.demo-area{width:100%;aspect-ratio:3/2;position:relative;background:var(--bg);cursor:default}
+.demo-area .da-grid{position:absolute;inset:6px;border:1px dashed var(--bd2)}
+.demo-area .da-box{position:absolute;border-radius:1px;cursor:grab;display:flex;align-items:center;justify-content:center;font-size:.5rem;color:rgba(255,255,255,.4);user-select:none;transition:box-shadow .15s ease}
+.demo-area .da-box.dragging{cursor:grabbing;z-index:10;box-shadow:0 0 16px rgba(215,25,33,.3)}
+.demo-bottom{padding:.6rem 1.2rem;border-top:1px solid var(--bd);display:flex;justify-content:space-between;font-size:.6rem;color:var(--tx3)}
+.demo-bottom .db-val{color:var(--grn);font-weight:500}
 
-  html, body {
-    height: 100%;
-    overflow: hidden;
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--sans);
-    -webkit-font-smoothing: antialiased;
-  }
+/* CURSOR */
+.cursor-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;margin-top:2.5rem;background:var(--bd);border:1px solid var(--bd);border-radius:2px;overflow:hidden}
+.cg-cell{background:var(--bg-c);padding:1.8rem}
+.cg-cell .cg-num{font-size:.6rem;color:var(--tx3);margin-bottom:.8rem;letter-spacing:.1em}
+.cg-cell h3{margin-bottom:.6rem}
+.cursor-img{margin-top:2.5rem;border:1px solid var(--bd);border-radius:2px;overflow:hidden}
+.cursor-img img{width:100%;display:block}
+.img-placeholder{background:var(--bg-c);padding:3rem 2rem;text-align:center;font-size:.68rem;color:var(--tx3);letter-spacing:.05em}
 
-  /* ── dot grid background ── */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image: radial-gradient(circle, #1a1a1a 1px, transparent 1px);
-    background-size: 40px 40px;
-    pointer-events: none;
-    z-index: 0;
-  }
+/* CHALLENGE */
+.ch-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;margin-top:2.5rem;background:var(--bd);border:1px solid var(--bd);border-radius:2px;overflow:hidden}
+.ch-cell{background:var(--bg-c);padding:2rem}
+.ch-cell .ch-tag{font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem}
+.ch-easy .ch-tag{color:var(--grn)}.ch-hard .ch-tag{color:var(--ac)}
+.ch-cell p{margin-bottom:1rem}
+.ch-bar-track{height:3px;background:var(--bd);border-radius:1px;overflow:hidden;margin-bottom:.3rem}
+.ch-bar-fill{height:100%;border-radius:1px;width:0;transition:width 1.5s var(--eo)}
+.ch-easy .ch-bar-fill{background:var(--grn)}.ch-hard .ch-bar-fill{background:var(--ac)}
+.ch-easy.visible .ch-bar-fill{width:88%}.ch-hard.visible .ch-bar-fill{width:32%}
+.ch-bar-label{font-size:.6rem;color:var(--tx3)}
+.figma-block{margin-top:2.5rem;padding:1.8rem 2rem;border-left:2px solid var(--ac);background:var(--ac-d);border-radius:0 2px 2px 0}
+.figma-block p{font-size:.82rem}.figma-block strong{color:var(--tx);font-weight:600}
 
-  /* ── slide container ── */
-  .deck {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    z-index: 1;
-  }
+/* WORKFLOW */
+.wf-intro{max-width:680px;margin-bottom:3rem}
+.wf-intro p strong{color:var(--tx)}
+.wf-diagram{border:1px solid var(--bd);border-radius:2px;background:var(--bg-c);padding:clamp(1.5rem,3vw,2.5rem);margin-bottom:2.5rem}
+.wf-flow{display:flex;align-items:center;justify-content:center;gap:0;flex-wrap:wrap}
+.wf-node{border:1px solid var(--bd);border-radius:2px;background:var(--bg);padding:1rem 1.2rem;text-align:center;min-width:120px;cursor:pointer;transition:all .25s ease}
+.wf-node:hover,.wf-node.active{border-color:var(--ac);background:var(--ac-d)}
+.wf-node .wf-ico{font-size:1.1rem;margin-bottom:.4rem;display:block}
+.wf-node .wf-name{font-size:.7rem;font-weight:600;color:var(--tx);display:block;letter-spacing:.02em}
+.wf-node .wf-sub{font-size:.58rem;color:var(--tx3);display:block;margin-top:.15rem}
+.wf-arrow{color:var(--tx3);font-size:.9rem;padding:0 .4rem;flex-shrink:0}
+.wf-detail-box{margin-top:1.5rem;padding:1.2rem 1.5rem;border:1px solid var(--bd);border-radius:2px;background:var(--bg);display:none}
+.wf-detail-box.show{display:block;animation:fadeSlide .35s var(--eo)}
+@keyframes fadeSlide{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.wf-detail-box h4{font-family:var(--mono);font-size:.72rem;font-weight:600;color:var(--ac);margin-bottom:.6rem;letter-spacing:.05em;text-transform:uppercase}
+.wf-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--bd);border:1px solid var(--bd);border-radius:2px;overflow:hidden}
+.wf-card{background:var(--bg-c);padding:2rem 1.8rem;border:none;border-radius:0}
+.wf-card .wf-card-num{font-size:.55rem;color:var(--tx3);letter-spacing:.15em;margin-bottom:1rem}
+.wf-card h3{margin-bottom:.7rem}
+.wf-card .wf-analogy{display:inline-block;margin-top:1rem;font-size:.62rem;color:var(--tx3);padding:.3rem .6rem;border:1px solid var(--bd);border-radius:1px;letter-spacing:.05em}
+.ctx-warn{margin-top:2.5rem;padding:1.5rem 2rem;border:1px solid var(--bd);background:var(--bg-c);border-radius:2px;display:flex;gap:1.2rem;align-items:flex-start}
+.ctx-warn .cw-icon{color:var(--yel);font-size:1rem;flex-shrink:0;margin-top:.1rem}
+.ctx-warn strong{color:var(--tx)}
 
-  .slide {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    padding: 6vh 10vw 7rem;
-    opacity: 0;
-    transform: translateY(20px);
-    transition: opacity 0.5s ease, transform 0.5s ease;
-    pointer-events: none;
-    overflow-y: auto;
-  }
+/* PROCESS */
+.modes-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--bd);border:1px solid var(--bd);border-radius:2px;overflow:hidden;margin:2rem 0}
+.mode-cell{background:var(--bg-c);padding:1.3rem}
+.mode-cell .mc-name{font-size:.72rem;font-weight:600;color:var(--tx);margin-bottom:.3rem}
+.mode-cell p{font-size:.72rem}
+.mode-flow{display:flex;align-items:center;gap:.5rem;margin-bottom:3rem;flex-wrap:wrap}
+.mf-step{font-size:.68rem;font-weight:500;padding:.4rem .9rem;border:1px solid var(--bd);border-radius:2px;color:var(--tx2)}
+.mf-step.active{border-color:var(--ac);color:var(--ac)}
+.mf-arr{color:var(--tx3);font-size:.8rem}
+.timeline{position:relative;padding-left:1.5rem}
+.timeline::before{content:'';position:absolute;left:3px;top:8px;bottom:8px;width:1px;background:var(--bd2)}
+.tl-item{position:relative;padding:0 0 3rem 2rem}
+.tl-item:last-child{padding-bottom:0}
+.tl-item::before{content:'';position:absolute;left:-1.5rem;top:7px;width:7px;height:7px;border-radius:50%;background:var(--bg);border:1.5px solid var(--bd3);z-index:1}
+.tl-item.tl-key::before{border-color:var(--ac);background:var(--ac);box-shadow:0 0 8px var(--ac-g)}
+.tl-item .tl-tag{font-size:.6rem;color:var(--ac);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.3rem}
+.tl-item h3{margin-bottom:.5rem}
+.tl-item>p{max-width:620px}
+.tl-img{margin-top:1rem;border:1px solid var(--bd);border-radius:2px;overflow:hidden;max-width:700px}
+.tl-img img{width:100%;display:block}
+.ba-slider{position:relative;max-width:800px;margin-top:1.2rem;border:1px solid var(--bd);border-radius:2px;overflow:hidden;cursor:col-resize;user-select:none;touch-action:none}
+.ba-slider img{width:100%;height:auto;display:block}
+.ba-after{position:absolute;inset:0;overflow:hidden}
+.ba-after img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover}
+.ba-handle{position:absolute;top:0;bottom:0;width:2px;background:var(--ac);z-index:5;pointer-events:none}
+.ba-handle::before{content:'\25C2 \25B8';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:32px;height:32px;background:var(--ac);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.55rem;color:#fff;letter-spacing:.15em}
+.ba-tag{position:absolute;top:8px;font-size:.55rem;letter-spacing:.12em;text-transform:uppercase;padding:.2rem .5rem;background:rgba(0,0,0,.75);border:1px solid var(--bd);border-radius:1px;color:var(--tx3);z-index:3;pointer-events:none}
+.ba-tag-l{left:8px}.ba-tag-r{right:8px}
 
-  .slide::before,
-  .slide::after {
-    content: '';
-    flex: 1 0 0px;
-  }
+/* RESULTS */
+.result-img{position:relative;margin:2.5rem 0;border:1px solid var(--bd);border-radius:2px;overflow:hidden}
+.result-img img{width:100%;display:block}
+.rs-overlay{position:absolute;inset:0;pointer-events:none}
+.rs-hot{position:absolute;pointer-events:auto;cursor:pointer}
+.rs-dot{width:22px;height:22px;border-radius:50%;background:var(--ac);display:flex;align-items:center;justify-content:center;font-size:.55rem;font-weight:700;color:#fff;box-shadow:0 0 0 0 var(--ac-g);animation:hpulse 2.5s ease infinite}
+@keyframes hpulse{0%,100%{box-shadow:0 0 0 0 var(--ac-g)}50%{box-shadow:0 0 0 6px transparent}}
+.rs-tip{position:absolute;top:calc(100% + 6px);left:50%;transform:translateX(-50%) translateY(3px);background:rgba(10,10,10,.95);border:1px solid var(--bd2);border-radius:2px;padding:.6rem .9rem;white-space:nowrap;font-size:.68rem;color:var(--tx2);opacity:0;pointer-events:none;transition:opacity .15s ease,transform .15s ease;z-index:10}
+.rs-hot:hover .rs-tip{opacity:1;transform:translateX(-50%) translateY(0)}
+.rs-tip strong{color:var(--tx);font-weight:600;display:block;margin-bottom:.15rem;font-size:.7rem}
+.result-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--bd);border:1px solid var(--bd);border-radius:2px;overflow:hidden}
+.rs-cell{background:var(--bg-c);padding:1.5rem}
+.rs-cell .rs-num{font-family:var(--sans);font-size:1.6rem;font-weight:700;letter-spacing:-.03em;margin-bottom:.2rem}
+.rs-cell .rs-label{font-size:.68rem;color:var(--tx3)}
 
-  .slide.active {
-    opacity: 1;
-    transform: translateY(0);
-    pointer-events: auto;
-  }
+/* TAKEAWAYS */
+.ta-grid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--bd);border:1px solid var(--bd);border-radius:2px;overflow:hidden;margin-top:2.5rem}
+.ta-cell{background:var(--bg-c);padding:2rem}
+.ta-cell .ta-tag{font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;margin-bottom:1rem}
+.ta-cell h3{margin-bottom:.8rem}
+.ta-cell ul{list-style:none;display:flex;flex-direction:column;gap:.5rem}
+.ta-cell li{padding-left:.8rem;position:relative;font-size:.78rem}
+.ta-cell li::before{content:'';position:absolute;left:0;top:.6em;width:3px;height:3px;border-radius:50%;background:var(--tx3)}
 
-  /* ── typography ── */
-  .tag {
-    font-family: var(--mono);
-    font-size: 0.7rem;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--accent);
-    margin-bottom: 1.5rem;
-  }
+/* FOOTER */
+.site-footer{padding:3rem 0;text-align:center}
+.site-footer::before{content:'';display:block;width:40px;height:1px;background:var(--bd2);margin:0 auto 2rem}
+.site-footer p{font-size:.65rem;color:var(--tx3)}
+.site-footer a{color:var(--tx2);text-decoration:none;border-bottom:1px solid var(--bd);transition:all .2s}
+.site-footer a:hover{color:var(--ac);border-color:var(--ac)}
 
-  h1 {
-    font-size: clamp(2.2rem, 5vw, 4.5rem);
-    font-weight: 700;
-    line-height: 1.05;
-    letter-spacing: -0.03em;
-    margin-bottom: 1rem;
-  }
-
-  h2 {
-    font-size: clamp(1.6rem, 3.5vw, 3rem);
-    font-weight: 600;
-    line-height: 1.15;
-    letter-spacing: -0.02em;
-    margin-bottom: 1.5rem;
-  }
-
-  .subtitle {
-    font-size: clamp(0.95rem, 1.5vw, 1.15rem);
-    color: var(--text-dim);
-    font-weight: 300;
-    margin-top: 0.5rem;
-  }
-
-  ul {
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: 0.85rem;
-  }
-
-  ul li {
-    font-size: clamp(0.9rem, 1.4vw, 1.1rem);
-    font-weight: 400;
-    color: var(--text);
-    padding-left: 1.2rem;
-    position: relative;
-    line-height: 1.5;
-  }
-
-  ul li::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0.55em;
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
-    background: var(--accent);
-  }
-
-  .highlight {
-    color: var(--accent);
-    font-weight: 600;
-  }
-
-  .mono {
-    font-family: var(--mono);
-    font-size: 0.85em;
-    color: var(--accent);
-  }
-
-  /* ── special layouts ── */
-  .title-slide {
-    align-items: center;
-    text-align: center;
-    gap: 1rem;
-  }
-
-  .title-slide .author {
-    font-size: 1rem;
-    font-weight: 300;
-    color: var(--text-dim);
-    margin-top: 0.5rem;
-    letter-spacing: 0.05em;
-  }
-
-  .two-col {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 3rem;
-    margin-top: 1.5rem;
-  }
-
-  @media (max-width: 768px) {
-    .two-col { grid-template-columns: 1fr; gap: 1.5rem; }
-    .slide { padding: 4vh 6vw 6rem; }
-  }
-
-  .flow {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-top: 1.5rem;
-    flex-wrap: wrap;
-  }
-
-  .flow-step {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 0.6rem 1.2rem;
-    font-family: var(--mono);
-    font-size: 0.85rem;
-    font-weight: 500;
-  }
-
-  .flow-arrow {
-    color: var(--text-dim);
-    font-size: 1.2rem;
-  }
-
-  .price-tag {
-    display: inline-block;
-    font-family: var(--mono);
-    font-size: clamp(2rem, 4vw, 3.5rem);
-    font-weight: 700;
-    color: var(--accent);
-    margin: 1rem 0;
-  }
-
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 1.5rem;
-  }
-
-  .card h3 {
-    font-size: 0.95rem;
-    font-weight: 600;
-    margin-bottom: 0.6rem;
-  }
-
-  .card p, .card li {
-    font-size: 0.85rem;
-    color: #999;
-  }
-
-  .emoji-big {
-    font-size: 3rem;
-    margin-bottom: 1rem;
-  }
-
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  /* ── navigation ── */
-  .nav {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    z-index: 10;
-    padding: 1.2rem 0 2rem;
-    background: linear-gradient(to top, var(--bg) 60%, transparent);
-    pointer-events: none;
-  }
-
-  .nav > * {
-    pointer-events: auto;
-  }
-
-  .nav-dots {
-    display: flex;
-    gap: 6px;
-  }
-
-  .nav-dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: #333;
-    cursor: pointer;
-    transition: background 0.3s, transform 0.3s;
-  }
-
-  .nav-dot.active {
-    background: var(--accent);
-    transform: scale(1.3);
-  }
-
-  .nav-btn {
-    background: none;
-    border: 1px solid #222;
-    border-radius: 4px;
-    color: var(--text-dim);
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    font-size: 0.8rem;
-    transition: border-color 0.2s, color 0.2s;
-  }
-
-  .nav-btn:hover {
-    border-color: #444;
-    color: var(--text);
-  }
-
-  .slide-counter {
-    position: fixed;
-    top: 2rem;
-    right: 3rem;
-    font-family: var(--mono);
-    font-size: 0.7rem;
-    color: #333;
-    z-index: 10;
-  }
-
-  /* ── timeline ── */
-  .timeline {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    margin-top: 1.5rem;
-  }
-
-  .timeline-item {
-    display: flex;
-    gap: 1rem;
-    align-items: flex-start;
-  }
-
-  .timeline-marker {
-    font-family: var(--mono);
-    font-size: 0.75rem;
-    color: var(--accent);
-    white-space: nowrap;
-    min-width: 80px;
-    padding-top: 2px;
-  }
-
-  .timeline-text {
-    font-size: 0.95rem;
-    color: #aaa;
-    line-height: 1.4;
-  }
-
-  /* ── scrollable code panels ── */
-  .code-panel {
-    background: #0d0d0d;
-    border: 1px solid #1a1a1a;
-    border-radius: 8px;
-    padding: 1.2rem;
-    max-height: 340px;
-    overflow-y: auto;
-    font-family: var(--mono);
-    font-size: 0.72rem;
-    line-height: 1.65;
-    color: #999;
-    scrollbar-width: thin;
-    scrollbar-color: #333 transparent;
-  }
-  .code-panel::-webkit-scrollbar { width: 5px; }
-  .code-panel::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
-  .code-panel::-webkit-scrollbar-track { background: transparent; }
-  .code-panel h4 {
-    font-size: 0.8rem;
-    font-weight: 600;
-    color: var(--text);
-    margin-bottom: 0.8rem;
-    font-family: var(--mono);
-  }
-  .code-panel .section-label {
-    color: var(--accent);
-    font-weight: 600;
-    font-size: 0.73rem;
-    margin-top: 1rem;
-    margin-bottom: 0.3rem;
-    display: block;
-  }
-  .code-panel .output-format {
-    background: rgba(215, 25, 33, 0.08);
-    border-left: 2px solid var(--accent);
-    padding: 0.5rem 0.8rem;
-    margin: 0.6rem 0;
-    border-radius: 0 4px 4px 0;
-    color: #ccc;
-  }
-  .code-panel p {
-    margin-bottom: 0.3rem;
-  }
-  .code-panel ul {
-    list-style: disc;
-    padding-left: 1.2rem;
-    gap: 0.25rem;
-    margin: 0.4rem 0;
-  }
-  .code-panel ul li::before {
-    display: none;
-  }
-  .code-panel ul li {
-    font-size: 0.72rem;
-    color: #999;
-    padding-left: 0;
-    line-height: 1.55;
-  }
-  .code-panel ol {
-    padding-left: 1.4rem;
-    margin: 0.4rem 0;
-  }
-  .code-panel ol li {
-    font-size: 0.72rem;
-    color: #999;
-    line-height: 1.55;
-    margin-bottom: 0.15rem;
-  }
+/* RESPONSIVE */
+@media(max-width:900px){
+  .hero .container{grid-template-columns:1fr}.hero-visual{order:-1}
+  .task-layout{grid-template-columns:1fr}.cursor-grid{grid-template-columns:1fr}
+  .ch-grid{grid-template-columns:1fr}.wf-cards{grid-template-columns:1fr}
+  .wf-flow{flex-direction:column}.wf-arrow{transform:rotate(90deg)}
+  .modes-row{grid-template-columns:1fr 1fr}.result-stats{grid-template-columns:1fr}
+  .ta-grid{grid-template-columns:1fr}
+}
+@media(max-width:600px){.modes-row{grid-template-columns:1fr}section{padding:clamp(3rem,8vw,5rem) 0}}
+@media(prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}.hero-badge .pulse-dot{animation:none}.rs-dot{animation:none}}
 </style>
 </head>
 <body>
 
-<div class="slide-counter"><span id="counter"></span></div>
-
-<div class="deck">
-
-  <!-- ═══════ SLIDE 0: TITLE ═══════ -->
-  <div class="slide title-slide active" data-index="0">
-    <img src="Cursor_logo.png" alt="Cursor logo" style="width:80px; height:auto; border-radius:16px; object-fit:contain; margin-bottom:1rem;">
-    <h1>Cursor</h1>
-    <p class="subtitle">AI-powered vývojové prostředí</p>
-    <p class="author">Lukáš Moravanský</p>
-  </div>
-
-  <!-- ═══════ SLIDE 1: CÍL ═══════ -->
-  <div class="slide" data-index="1">
-    <div class="tag">01 — Úvod</div>
-    <h2>Co bylo mým cílem?</h2>
-    <ul>
-      <li>Prezentovat <span class="highlight">nástroj</span>, ne hledat optimální algoritmus</li>
-      <li>Není to benchmark algoritmů — je to benchmark AI nástrojů</li>
-      <li>Hlavní zaměření → <span class="highlight">Front-end & GUI</span></li>
-    </ul>
-  </div>
-
-  <!-- ═══════ SLIDE 2: CO JE CURSOR ═══════ -->
-  <div class="slide" data-index="2">
-    <div class="tag">02 — Nástroj</div>
-    <h2>Co je Cursor?</h2>
-    <ul>
-      <li>Fork <span class="mono">VS Code</span> — známé prostředí, snadná instalace</li>
-      <li>Vlastní model <span class="mono">Composer</span> — optimalizovaný pro kódování</li>
-      <li>Přístup k modelům třetích stran — Claude, Gemini, ChatGPT</li>
-      <li>Vše v rámci jednoho předplatného</li>
-    </ul>
-    <div style="margin-top:2rem; display:flex; justify-content:center;">
-      <img src="cursor_pricing.png" alt="Ceník modelů Cursor" style="width:100%; max-width:750px; height:auto; border-radius:8px; object-fit:contain; border:1px solid #1a1a1a;">
+<section class="hero">
+  <div class="container">
+    <div class="hero-content">
+      <div class="hero-badge reveal"><span class="pulse-dot"></span>AI Tool Benchmark · Case Study</div>
+      <h1 class="reveal reveal-d1">2D Bin Packing<span class="line-accent">with Cursor</span></h1>
+      <p class="hero-desc reveal reveal-d2">Building an industrial desktop application using AI&#8209;assisted development. Part of an internal benchmark comparing Cursor, Claude&nbsp;Code, and ChatGPT&nbsp;Codex on the same real&#8209;world engineering task.</p>
+      <div class="hero-meta reveal reveal-d3">
+        <div class="hero-meta-row"><span class="hm-label">AUTHOR</span><span class="hm-value">Lukáš Moravanský</span></div>
+        <div class="hero-meta-row"><span class="hm-label">ORG</span><span class="hm-value">JIC Smart Factory</span></div>
+        <div class="hero-meta-row"><span class="hm-label">TOOL</span><span class="hm-value">Cursor IDE · Pro Plan</span></div>
+        <div class="hero-meta-row"><span class="hm-label">BUDGET</span><span class="hm-value">40 hours · $24/month</span></div>
+      </div>
     </div>
-  </div>
-
-  <!-- ═══════ SLIDE 3: PROSTŘEDÍ (NEW) ═══════ -->
-  <div class="slide" data-index="3" style="align-items:center; text-align:center;">
-    <div class="tag">02b — Prostředí</div>
-    <h2>Prostředí Cursoru</h2>
-    <img src="cursor_enviroment.png" alt="Prostředí Cursoru — fork VS Code" style="width:100%; max-width:1100px; height:auto; border-radius:8px; object-fit:contain; border:1px solid #1a1a1a;">
-    <p class="subtitle" style="margin-top:1rem;">Fork VS Code — okamžitě známé prostředí</p>
-  </div>
-
-  <!-- ═══════ SLIDE 4: SPONZOR ═══════ -->
-  <div class="slide title-slide" data-index="4" id="sponsor-slide">
-    <div class="tag">03 — Sponzor</div>
-    <h2 class="sponsor-title">Sponzor tohoto projektu</h2>
-    <div id="sponsor-reveal" style="opacity:0; transform:translateY(15px); transition: all 0.6s ease;">
-      <div class="emoji-big">🪞</div>
-      <p style="font-size:1.3rem; font-weight:600; margin-bottom:2rem;">já.</p>
-    </div>
-    <div id="sponsor-details" style="opacity:0; transform:translateY(15px); transition: all 0.6s ease;">
-      <div style="position:relative; display:inline-block;">
-        <div class="price-tag" id="price-fake">$20<span style="font-size:0.4em; font-weight:300;">/měs</span></div>
-        <div id="price-strike" style="position:absolute; inset:0; display:none; align-items:center; justify-content:center;">
-          <div style="width:110%; height:3px; background:var(--accent); transform:rotate(-8deg); position:absolute;"></div>
+    <div class="hero-visual reveal reveal-d2">
+      <div class="pack-canvas" id="heroCanvas">
+        <div class="pc-grid"></div>
+        <div class="pack-readout">
+          <span>UTIL <span class="pr-val" id="heroUtil">0%</span></span>
+          <span>PLACED <span class="pr-val" id="heroPlaced">0/0</span></span>
+          <span>STATUS <span class="pr-val" id="heroStatus">PACKING…</span></span>
         </div>
       </div>
-      <div id="price-real" style="display:none;">
-        <div class="price-tag" style="color:#fff;">$24<span style="font-size:0.4em; font-weight:300;">/měs</span></div>
-        <p style="font-family:var(--mono); font-size:0.75rem; color:var(--text-dim);">+ DPH · plátce DPH, ironicky</p>
+    </div>
+  </div>
+</section>
+
+<section id="task">
+  <div class="container">
+    <div class="section-tag reveal">01 — The Task</div>
+    <h2 class="reveal">What is 2D Bin Packing?</h2>
+    <div class="task-layout">
+      <div class="task-text reveal reveal-d1">
+        <p>You have a pallet of fixed size and a set of boxes with different dimensions. The goal: <strong style="color:var(--tx)">fit as many boxes as possible</strong> without overlaps, maximizing space utilization.</p>
+        <p style="margin-top:.8rem">A classic optimization problem in logistics and manufacturing. The benchmark required building a complete desktop application&nbsp;— interactive GUI, solver algorithms, input validation, and system logging.</p>
+        <h3>Requirements</h3>
+        <div class="req-list">
+          <div class="req-row"><span class="req-key">LANGUAGE</span><span class="req-val">Python 3.10+ with PyQt5</span></div>
+          <div class="req-row"><span class="req-key">ARCH</span><span class="req-val">Modular — GUI separated from solver logic</span></div>
+          <div class="req-row"><span class="req-key">OUTPUT</span><span class="req-val">App, GitHub repo, docs, presentation</span></div>
+          <div class="req-row"><span class="req-key">TIME</span><span class="req-val">40 hours maximum</span></div>
+          <div class="req-row"><span class="req-key">EVAL</span><span class="req-val">Dev speed, code quality, manual fixes, context handling</span></div>
+        </div>
       </div>
-      <div style="margin-top:1.5rem; display:flex; gap:2rem; justify-content:center; flex-wrap:wrap;">
-        <p class="subtitle">Pro plán · Trial vydrží ~2 dny</p>
-        <p class="subtitle">Používám 4 měsíce a 2 týdny</p>
+      <div class="demo-box reveal reveal-d2">
+        <div class="demo-top"><span>Interactive Demo</span><button class="demo-btn" id="demoReset">RESET</button></div>
+        <div class="demo-area" id="demoArea"><div class="da-grid"></div></div>
+        <div class="demo-bottom">
+          <span>PLACED <span class="db-val" id="demoPlaced">0/6</span></span>
+          <span>UTIL <span class="db-val" id="demoUtil">0%</span></span>
+          <span style="font-style:italic">drag boxes onto pallet</span>
+        </div>
       </div>
     </div>
-    <p id="sponsor-hint" class="subtitle" style="position:absolute; bottom:6rem; font-family:var(--mono); font-size:0.65rem; color:#333; transition: opacity 0.3s;">stiskni mezerník</p>
   </div>
+</section>
 
-  <!-- ═══════ SLIDE 5: TIMELINE ═══════ -->
-  <div class="slide" data-index="5">
-    <div class="tag">04 — Kontext</div>
-    <h2>Timeline vývoje</h2>
+<section id="cursor">
+  <div class="container">
+    <div class="section-tag reveal">02 — The Tool</div>
+    <h2 class="reveal">What is Cursor?</h2>
+    <p class="reveal reveal-d1" style="max-width:650px;margin-top:.5rem">An AI&#8209;powered code editor built as a fork of VS&nbsp;Code. Same familiar environment, but with built&#8209;in AI agents that plan, write, and modify code across your entire project.</p>
+    <div class="cursor-grid reveal reveal-d2">
+      <div class="cg-cell"><div class="cg-num">01</div><h3>Built on VS Code</h3><p>Familiar environment. Imports your settings, extensions, keybindings. Zero learning curve.</p></div>
+      <div class="cg-cell"><div class="cg-num">02</div><h3>Multi-model access</h3><p>Claude, GPT-4, Gemini, or Cursor's own Composer — all within one $20/mo subscription.</p></div>
+      <div class="cg-cell"><div class="cg-num">03</div><h3>Agent workflow</h3><p>Beyond autocomplete. Reads your project, plans changes, creates files, iterates in conversation.</p></div>
+    </div>
+    <div class="cursor-img reveal" style="min-height:160px;background:var(--bg-c);display:flex;align-items:center;justify-content:center"><span class="img-placeholder">[ cursor_environment.png ]</span></div>
+  </div>
+</section>
+
+<section id="challenge">
+  <div class="container">
+    <div class="section-tag reveal">03 — The Challenge</div>
+    <h2 class="reveal">Why is the GUI the hardest part?</h2>
+    <p class="reveal reveal-d1" style="max-width:650px;margin-top:.5rem">AI models trained on massive amounts of web code can produce beautiful websites easily. This project required PyQt5 — a desktop framework with far less training data and no visual feedback loop.</p>
+    <div class="ch-grid">
+      <div class="ch-cell ch-easy reveal reveal-d2">
+        <div class="ch-tag">✓ Web (HTML/CSS/JS)</div>
+        <p>Massive training data. AI produces polished, responsive UIs on the first try. Instant browser preview for feedback.</p>
+        <div class="ch-bar-track"><div class="ch-bar-fill"></div></div>
+        <div class="ch-bar-label">AI confidence — high</div>
+      </div>
+      <div class="ch-cell ch-hard reveal reveal-d3">
+        <div class="ch-tag">✗ Desktop (PyQt5)</div>
+        <p>Limited training data. Specialized widgets. The agent writes code but cannot see the rendered result — no automatic visual feedback.</p>
+        <div class="ch-bar-track"><div class="ch-bar-fill"></div></div>
+        <div class="ch-bar-label">AI confidence — needs guidance</div>
+      </div>
+    </div>
+    <div class="figma-block reveal">
+      <p><strong>Original plan:</strong> Use Figma → HTML → PyQt pipeline. Cursor supports Figma integration, but it requires Figma's paid plan. Adding another subscription wasn't worth it.</p>
+      <p style="margin-top:.6rem"><strong>What happened:</strong> I let the AI agent handle design autonomously, using reference screenshots of award-winning interfaces. This saved hours of manual design work and produced better results than expected.</p>
+    </div>
+  </div>
+</section>
+
+<section id="workflow">
+  <div class="container">
+    <div class="section-tag reveal">04 — The Workflow</div>
+    <h2 class="reveal">Skills, Sub-agents & Rules</h2>
+    <div class="wf-intro reveal reveal-d1"><p>The biggest lesson: <strong>how you configure the AI agent matters more than which model you use.</strong> Cursor lets you define persistent instructions that guide the agent's behavior — similar to setting up a Claude Project with custom instructions, but for code development.</p></div>
+    <div class="wf-diagram reveal reveal-d2">
+      <div class="wf-flow">
+        <div class="wf-node" data-wf="prompt"><span class="wf-ico">💬</span><span class="wf-name">Prompt</span><span class="wf-sub">your request</span></div>
+        <div class="wf-arrow">→</div>
+        <div class="wf-node" data-wf="agent"><span class="wf-ico">🤖</span><span class="wf-name">Agent</span><span class="wf-sub">reads rules + skills</span></div>
+        <div class="wf-arrow">→</div>
+        <div class="wf-node" data-wf="code"><span class="wf-ico">📝</span><span class="wf-name">Code</span><span class="wf-sub">creates & edits</span></div>
+        <div class="wf-arrow">→</div>
+        <div class="wf-node" data-wf="subagent"><span class="wf-ico">🔍</span><span class="wf-name">Sub-agent</span><span class="wf-sub">reviews & critiques</span></div>
+        <div class="wf-arrow">↩</div>
+        <div class="wf-node" data-wf="feedback"><span class="wf-ico">📸</span><span class="wf-name">Screenshot</span><span class="wf-sub">visual feedback</span></div>
+      </div>
+      <div class="wf-detail-box" id="wfDetail"></div>
+    </div>
+    <div class="wf-cards">
+      <div class="wf-card reveal"><div class="wf-card-num">01 — RULES</div><h3>Project Rules</h3><p>Persistent instructions extracted from the specification. Instead of feeding the full PDF every prompt (wasting tokens), the agent summarized key requirements into compact rules — architecture, output format, validation.</p><span class="wf-analogy">≈ Claude Project instructions</span></div>
+      <div class="wf-card reveal reveal-d1"><div class="wf-card-num">02 — SKILLS</div><h3>Specialized Knowledge</h3><p>Knowledge files teaching the agent <em>how</em> to approach specific tasks. My "PyQt GUI Front-End Design" skill defined a complete design methodology — visual hierarchy, styling states, verification checklist.</p><span class="wf-analogy">≈ Claude Knowledge base</span></div>
+      <div class="wf-card reveal reveal-d2"><div class="wf-card-num">03 — SUB-AGENTS</div><h3>Autonomous Reviewers</h3><p>Agents called by the main agent when needed. My "senior-product-ui-critic" evaluates layout hierarchy, spacing, color, visual authority — UX expertise I couldn't articulate myself.</p><span class="wf-analogy">≈ Automated QA reviewer</span></div>
+    </div>
+    <div class="ctx-warn reveal"><div class="cw-icon">⚠</div><div><p><strong>Why this matters:</strong> After ~20 prompts, the agent forgets original architecture. It won't check the spec PDF even if the file is in the project. Rules and Skills act as persistent, compact memory — and save tokens by replacing bulky source documents.</p></div></div>
+  </div>
+</section>
+
+<section id="process">
+  <div class="container">
+    <div class="section-tag reveal">05 — The Process</div>
+    <h2 class="reveal">Development Timeline</h2>
+    <p class="reveal reveal-d1" style="max-width:650px;margin-top:.5rem;margin-bottom:1rem">Cursor offers four interaction modes. For the initial build: Ask → Plan → Agent (Build) → Iterate.</p>
+    <div class="modes-row reveal reveal-d2">
+      <div class="mode-cell"><div class="mc-name">Ask</div><p>Q&A only. Doesn't touch files.</p></div>
+      <div class="mode-cell"><div class="mc-name">Plan</div><p>Architecture, diagrams, rules. Project start.</p></div>
+      <div class="mode-cell"><div class="mc-name">Agent</div><p>Writes, edits, deletes code. Primary tool.</p></div>
+      <div class="mode-cell"><div class="mc-name">Debug</div><p>Targeted error resolution.</p></div>
+    </div>
+    <div class="mode-flow reveal">
+      <div class="mf-step">Ask</div><div class="mf-arr">→</div>
+      <div class="mf-step">Plan</div><div class="mf-arr">→</div>
+      <div class="mf-step active">Agent (Build)</div><div class="mf-arr">→</div>
+      <div class="mf-step">Iterate</div>
+    </div>
+    <h3 class="reveal" style="margin-bottom:1.5rem">How it went</h3>
     <div class="timeline">
-      <div class="timeline-item">
-        <div class="timeline-marker">únor</div>
-        <div class="timeline-text">Prokrastinace — „máme přes měsíc…"</div>
+      <div class="tl-item reveal"><div class="tl-tag">Attempt 1</div><h3>Functional code, ugly GUI</h3><p>Agent found a solver online and produced working code. Boxes placed correctly. The interface? Zero design thinking.</p><div class="tl-img"><div class="img-placeholder">[ old_gui_first_run.png ]</div></div></div>
+      <div class="tl-item reveal"><div class="tl-tag">Iteration</div><h3>Gradual redesign with references</h3><p>Fed award-winning web designs as visual references. Screenshots as feedback. Incremental improvement, but hitting limits without proper agent configuration.</p><div class="tl-img"><div class="img-placeholder">[ old_gui_visual_fixed.png ]</div></div></div>
+      <div class="tl-item tl-key reveal"><div class="tl-tag">Mid-project — Composer 2</div><h3>New model, decision to restart</h3><p>Cursor shipped Composer 2 mid-development. Rather than continuing with the old model, I restarted with proper preparation — Skills, Sub-agents, and Rules configured before the first prompt.</p></div>
+      <div class="tl-item reveal"><div class="tl-tag">Attempt 2</div><h3>Prepared agent, dramatically better</h3><p>Sub-agent analyzed a design reference screenshot. Skill guided PyQt styling. The second first-shot produced a significantly better interface. Solver added in prompt #2.</p>
+        <div class="ba-slider" id="baSlider"><img src="old_gui_first_run.png" alt="Before" style="min-height:250px;background:var(--bg-c)"><div class="ba-after" id="baAfter"><img src="gui_screenshot.png" alt="After" style="min-height:250px;background:var(--bg-c)"></div><div class="ba-handle" id="baHandle"></div><div class="ba-tag ba-tag-l">BEFORE</div><div class="ba-tag ba-tag-r">AFTER</div></div>
       </div>
-      <div class="timeline-item">
-        <div class="timeline-marker">~15. března</div>
-        <div class="timeline-text">Příprava materiálů, studium best practices pro <span class="highlight">first shot</span></div>
-      </div>
-      <div class="timeline-item">
-        <div class="timeline-marker">first shot</div>
-        <div class="timeline-text">Klíčový moment — staví architekturu, pálí tokeny, chyby se táhnou</div>
-      </div>
-    </div>
-    <p class="subtitle" style="margin-top:1.5rem;">Jeden týden vede OpenAI, druhý Claude… Cursor = outsider?</p>
-  </div>
-
-  <!-- ═══════ SLIDE 6: UI & FIGMA ═══════ -->
-  <div class="slide" data-index="6">
-    <div class="tag">05 — User Interface</div>
-    <h2>Proč front-end?</h2>
-    <ul>
-      <li>LLM agenti se učili na HTML → web zvládnou dobře</li>
-      <li><span class="mono">PyQt</span> — speciální widgety, málo trénovacích dat</li>
-      <li>Agent <span class="highlight">nevidí výsledek</span> — nemá automatickou zpětnou vazbu</li>
-    </ul>
-  </div>
-
-  <!-- ═══════ SLIDE 7: FIGMA WORKFLOW ═══════ -->
-  <div class="slide" data-index="7">
-    <div class="tag">05b — Workflow</div>
-    <h2>Plánovaný workflow s Figmou</h2>
-    <div class="flow">
-      <div class="flow-step">Figma návrh</div>
-      <div class="flow-arrow">→</div>
-      <div class="flow-step">HTML/CSS kód</div>
-      <div class="flow-arrow">→</div>
-      <div class="flow-step">PyQt GUI</div>
-    </div>
-    <ul style="margin-top:2rem;">
-      <li>Cursor ↔ Figma propojení — vyžaduje paid plan Figmy</li>
-      <li>Nakonec nerealizováno — nechtělo se mi platit další subscription</li>
-    </ul>
-  </div>
-
-  <!-- ═══════ SLIDE 8: FIRST SHOT MODES ═══════ -->
-  <div class="slide" data-index="8">
-    <div class="tag">06 — First shot</div>
-    <h2>4 režimy práce</h2>
-    <div class="two-col">
-      <div class="card">
-        <h3><span class="mono">Ask</span></h3>
-        <p>Pouze Q&A — nezasahuje do projektu</p>
-      </div>
-      <div class="card">
-        <h3><span class="mono">Plan</span></h3>
-        <p>Vývojový plán, architektura, pravidla, diagramy</p>
-      </div>
-      <div class="card">
-        <h3><span class="mono">Agent</span></h3>
-        <p>Upravuje kód, maže, doplňuje, chatuje</p>
-      </div>
-      <div class="card">
-        <h3><span class="mono">Debug</span></h3>
-        <p>Ladění chyb (netestováno)</p>
-      </div>
-    </div>
-    <div class="flow" style="margin-top:2rem;">
-      <div class="flow-step">Ask</div>
-      <div class="flow-arrow">→</div>
-      <div class="flow-step">Plan</div>
-      <div class="flow-arrow">→</div>
-      <div class="flow-step">Build</div>
+      <div class="tl-item reveal"><div class="tl-tag">Polish</div><h3>Iterative fixes and self-critique</h3><p>Circled visual issues on screenshots. Asked the agent to find and fix flaws autonomously. Sub-agent caught spacing, alignment, and hierarchy issues I would have missed.</p></div>
     </div>
   </div>
+</section>
 
-  <!-- ═══════ SLIDE 9: VÝSLEDEK 1 ═══════ -->
-  <div class="slide" data-index="9" id="result-slide">
-    <div class="tag">07 — Výsledek</div>
-    <h2>Jak to dopadlo?</h2>
-    <ul>
-      <li>Funkční kód — solver nalezen automaticky</li>
-      <li id="result-ugly" style="opacity:0; transition: all 0.5s ease;">GUI? <span class="highlight">Škaredé.</span></li>
-    </ul>
-    <img src="old_gui_first_run.png" alt="První GUI — výsledek first shotu" id="result-img" style="width:100%; max-width:900px; height:auto; border-radius:8px; object-fit:contain; margin-top:2rem; opacity:0; transition: all 0.6s ease 0.2s;">
-    <p id="result-hint" class="subtitle" style="position:absolute; bottom:6rem; font-family:var(--mono); font-size:0.65rem; color:#333; transition: opacity 0.3s;">stiskni mezerník</p>
-  </div>
-
-  <!-- ═══════ SLIDE 10: REDESIGN ═══════ -->
-  <div class="slide" data-index="10">
-    <div class="tag">07b — Iterace</div>
-    <h2>Postupný redesign</h2>
-    <ul>
-      <li>Odkazy na oceňované weby jako designová předloha</li>
-      <li>Screenshot → agent → zpětná vazba → úprava</li>
-      <li>Důraz na responzivní design</li>
-    </ul>
-    <img src="old_gui_visual_fixed.png" alt="Vylepšené GUI po iteracích" style="width:100%; max-width:900px; height:auto; border-radius:8px; object-fit:contain; margin-top:2rem;">
-  </div>
-
-  <!-- ═══════ SLIDE 11: 19.3.2026 ═══════ -->
-  <div class="slide title-slide" data-index="11" id="twist-slide">
-    <div class="tag">08 — Plot twist</div>
-    <h2>19. 3. 2026</h2>
-    <p class="subtitle">Klidný čtvrteční večer…<br>Odpočívám, spokojený s prací posledních dní.</p>
-    <div id="twist-step1" style="opacity:0; transform:translateY(15px); transition: all 0.6s ease; margin-top:1.5rem;">
-      <div class="emoji-big">📱</div>
-      <p style="font-size:1.1rem; color:#aaa;">Zabzučel telefon…</p>
-      <p style="font-family:var(--mono); font-size:0.85rem; color:var(--text-dim); margin-top:0.5rem;">From: Team Cursor</p>
-    </div>
-    <div id="twist-step2" style="opacity:0; transform:translateY(15px); transition: all 0.6s ease; margin-top:1.5rem;">
-      <p style="font-weight:700; font-size:clamp(1.3rem, 2.5vw, 2rem); letter-spacing:-0.02em;">
-        Vydáváme <span class="highlight">Composer 2</span>.
-      </p>
-      <p style="font-family:var(--mono); font-size:0.8rem; color:var(--text-dim); margin-top:0.8rem;">takže… odznovu.</p>
-    </div>
-    <div id="twist-step3" style="opacity:0; transition: all 0.6s ease; margin-top:1.5rem;">
-      <img src="team_cursor_email.png" alt="E-mail od Team Cursor o Composer 2" style="width:100%; max-width:720px; height:auto; border-radius:8px; object-fit:contain; margin:0 auto; display:block;">
-    </div>
-    <p id="twist-hint" class="subtitle" style="position:absolute; bottom:6rem; font-family:var(--mono); font-size:0.65rem; color:#333; transition: opacity 0.3s;">stiskni mezerník</p>
-  </div>
-
-  <!-- ═══════ SLIDE 12: OD ZAČÁTKU ═══════ -->
-  <div class="slide" data-index="12">
-    <div class="tag">09 — Restart</div>
-    <h2>Znovu od začátku</h2>
-    <ul>
-      <li>Nový model → nový first shot</li>
-      <li>Poučení z chyb prvního pokusu</li>
-      <li>Studium tutoriálů — žádné ještě pro Composer 2 neexistovaly</li>
-      <li>Cíl stále stejný → <span class="highlight">krásný front-end</span></li>
-    </ul>
-  </div>
-
-  <!-- ═══════ SLIDE 13: SUB-AGENTS ═══════ -->
-  <div class="slide" data-index="13">
-    <div class="tag">10 — Optimalizace</div>
-    <h2>Sub-agents, Skills, Rules</h2>
-    <ul>
-      <li><span class="mono">Sub-agent</span> — definovaná role + instrukce; volán hlavním agentem</li>
-      <li><span class="mono">Skills</span> — specializované znalosti (PyQt GUI design)</li>
-      <li><span class="mono">Rules</span> — vygenerováno ze zadání; architektura & požadavky</li>
-    </ul>
-    <div class="two-col" style="margin-top:1.5rem;">
-      <div class="code-panel">
-        <h4>Sub-agent: senior-product-ui-critic</h4>
-        <div style="background:rgba(255,255,255,0.03); border-radius:4px; padding:0.6rem 0.8rem; margin-bottom:1rem; color:#666; font-size:0.7rem; line-height:1.7;">
-          name: senior-product-ui-critic<br>
-          model: default<br>
-          description: Brutal senior UI critic for desktop apps…<br>
-          readonly: true<br>
-          is_background: true
-        </div>
-        <p>You are a senior product UI critic reviewing a desktop application interface.</p>
-        <p style="margin-top:0.4rem;">Your role is NOT to code first.<br>Your role is to critique the interface like an experienced product designer from a top-tier SaaS company.</p>
-        <span class="section-label">Reference visual language</span>
-        <p>Construction Control style:</p>
-        <ul>
-          <li>strong layout discipline</li>
-          <li>calm premium industrial tone</li>
-          <li>controlled spacing</li>
-          <li>clear visual hierarchy</li>
-          <li>dense but breathable information blocks</li>
-          <li>technical confidence without visual noise</li>
-        </ul>
-        <span class="section-label">Evaluation criteria</span>
-        <ol>
-          <li>Layout hierarchy</li>
-          <li>Spacing rhythm</li>
-          <li>Alignment discipline</li>
-          <li>Density quality</li>
-          <li>Component consistency</li>
-          <li>Visual authority</li>
-          <li>Color behavior</li>
-          <li>Industrial product feel</li>
-          <li>Screenshot DNA preservation</li>
-          <li>Brutal honesty mode</li>
-        </ol>
-        <span class="section-label">Output format</span>
-        <div class="output-format">
-          A) What currently works<br>
-          B) What feels weak<br>
-          C) What feels visually cheap<br>
-          D) Highest priority next fix<br>
-          E) Exact implementation recommendation
-        </div>
-        <p style="margin-top:0.6rem;">Be concise, direct, brutal, senior-level.<br>Avoid generic praise.</p>
-      </div>
-      <div class="code-panel">
-        <h4>Skill: pyqt-gui-front-end-design</h4>
-        <div style="background:rgba(255,255,255,0.03); border-radius:4px; padding:0.6rem 0.8rem; margin-bottom:1rem; color:#666; font-size:0.7rem; line-height:1.7;">
-          name: pyqt-gui-front-end-design<br>
-          description: Design and polish high-quality PyQt5 desktop interfaces…
-        </div>
-        <p style="font-weight:600; color:var(--text); margin-bottom:0.4rem;">PyQt GUI Front-End Design</p>
-        <p>Use this skill to turn functional PyQt5 screens into production-grade desktop interfaces with strong visual hierarchy, consistent styling, and clear interaction flow.</p>
-        <span class="section-label">Scope</span>
-        <ul>
-          <li>Prioritize GUI/UX quality</li>
-          <li>Keep the workflow practical for benchmark/engineering tools</li>
-          <li>Avoid redesigning core algorithms unless explicitly requested</li>
-        </ul>
-        <span class="section-label">Design Workflow</span>
-        <ol>
-          <li>Understand the screen's purpose and key user flow</li>
-          <li>Choose one clear visual direction</li>
-          <li>Define a compact design system (typography, colors, spacing)</li>
-          <li>Apply structure first, then polish (layouts, grouping, alignment)</li>
-          <li>Style states deliberately (buttons, inputs, logging)</li>
-          <li>Validate usability</li>
-        </ol>
-        <span class="section-label">PyQt5 Implementation Rules</span>
-        <ul>
-          <li>Prefer centralized style constants</li>
-          <li>Use Qt Style Sheets intentionally</li>
-          <li>Preserve predictable behavior</li>
-          <li>Ensure states are visually distinct</li>
-          <li>Keep styling cohesive</li>
-        </ul>
-        <span class="section-label">Response Format</span>
-        <div class="output-format">
-          1. State the chosen visual direction in one sentence<br>
-          2. List design-system decisions<br>
-          3. Implement concrete PyQt5 code updates<br>
-          4. End with verification checklist
-        </div>
+<section id="results">
+  <div class="container">
+    <div class="section-tag reveal">06 — Results</div>
+    <h2 class="reveal">The Final Application</h2>
+    <p class="reveal reveal-d1" style="max-width:650px;margin-top:.5rem">Fully functional 2D bin-packing app with multiple solvers, clean industrial interface, and modular architecture designed for extensibility.</p>
+    <div class="result-img reveal reveal-d2">
+      <img src="gui_screenshot.png" alt="Final application">
+      <div class="rs-overlay">
+        <div class="rs-hot" style="top:5%;left:12%"><div class="rs-dot">1</div><div class="rs-tip"><strong>Pallet Config</strong>Width, height, gap settings</div></div>
+        <div class="rs-hot" style="top:5%;left:28%"><div class="rs-dot">2</div><div class="rs-tip"><strong>Solver Strategy</strong>MaxRects, Skyline, GA MaxRects</div></div>
+        <div class="rs-hot" style="top:30%;left:14%"><div class="rs-dot">3</div><div class="rs-tip"><strong>Item Types</strong>Dimensions, quantity, rotation</div></div>
+        <div class="rs-hot" style="top:13%;left:62%"><div class="rs-dot">4</div><div class="rs-tip"><strong>Visualization</strong>Utilization, placed count, solve time</div></div>
+        <div class="rs-hot" style="top:88%;left:28%"><div class="rs-dot">5</div><div class="rs-tip"><strong>System Log</strong>Timestamped INFO/WARN/ERROR</div></div>
       </div>
     </div>
-  </div>
-
-  <!-- ═══════ SLIDE 14: PROČ? ═══════ -->
-  <div class="slide" data-index="14">
-    <div class="tag">10b — Proč to dělat?</div>
-    <h2>Práce s kontextem</h2>
-    <ul>
-      <li>Agent po ~20 promptech <span class="highlight">zapomíná</span> architekturu</li>
-      <li>Neví, že se má dívat do zadávacího PDF</li>
-      <li>Celé PDF = zbytečně velký kontext = spálené tokeny</li>
-      <li>Rules & Skills → kompaktní, persistentní instrukce</li>
-    </ul>
-  </div>
-
-  <!-- ═══════ SLIDE 15: DRUHÝ FIRST SHOT ═══════ -->
-  <div class="slide" data-index="15">
-    <div class="tag">11 — Druhý pokus</div>
-    <h2>Druhý first shot</h2>
-    <ul>
-      <li>Screenshot předlohy → agent + sub-agent analyzují design</li>
-      <li>UX analýza nad moje síly → sub-agent ji zvládl</li>
-      <li>Solver nebyl zakomponován → opraven v 2. promptu</li>
-    </ul>
-    <div class="two-col" style="margin-top:1rem;">
-      <div>
-        <img src="design_style.png" alt="Designová předloha — Construction Control" style="width:100%; height:auto; border-radius:8px; object-fit:contain;">
-      </div>
-      <div>
-        <img src="new_gui_first_shot.png" alt="Výsledné GUI — druhý first shot" style="width:100%; height:auto; border-radius:8px; object-fit:contain;">
-      </div>
+    <div class="result-stats reveal">
+      <div class="rs-cell"><div class="rs-num" style="color:var(--grn)">3</div><div class="rs-label">Solver algorithms — MaxRects, Skyline, GA</div></div>
+      <div class="rs-cell"><div class="rs-num" style="color:var(--blu)">Modular</div><div class="rs-label">Architecture — plug in new solvers easily</div></div>
+      <div class="rs-cell"><div class="rs-num" style="color:var(--ac)">JSON</div><div class="rs-label">Import/export scenarios and solutions</div></div>
     </div>
   </div>
+</section>
 
-  <!-- ═══════ SLIDE 16: TOKENY (NEW) ═══════ -->
-  <div class="slide" data-index="16" style="align-items:center; text-align:center;">
-    <div class="tag">11b — Tokeny</div>
-    <h2>Spotřeba tokenů</h2>
-    <img src="token_spending.png" alt="Spotřeba tokenů — Composer 2 first shot" style="width:100%; max-width:800px; height:auto; border-radius:8px; object-fit:contain; border:1px solid #1a1a1a;">
-    <p class="subtitle" style="margin-top:1rem;">Composer 2 — jeden first shot prompt</p>
+<section id="takeaways">
+  <div class="container">
+    <div class="section-tag reveal">07 — Takeaways</div>
+    <h2 class="reveal">What I Learned</h2>
+    <div class="ta-grid">
+      <div class="ta-cell reveal"><div class="ta-tag" style="color:var(--grn)">✓ WORKED WELL</div><h3>Strengths</h3><ul><li>Skills + Sub-agents improved quality from the very first prompt</li><li>AI handled design decisions well when given proper reference material</li><li>Screenshot-based feedback loop was effective for desktop GUI</li><li>Restarting with better preparation after Composer 2 paid off significantly</li></ul></div>
+      <div class="ta-cell reveal reveal-d1"><div class="ta-tag" style="color:var(--ac)">✗ CHALLENGING</div><h3>Pain Points</h3><ul><li>PyQt5 limited training data — more mistakes than with web tech</li><li>Agent loses project context after ~20 prompts</li><li>No automatic visual feedback for desktop apps</li><li>Token management requires planning — first shot consumes the most</li></ul></div>
+      <div class="ta-cell reveal reveal-d2"><div class="ta-tag" style="color:var(--yel)">💡 TOKENS</div><h3>Token Economy</h3><ul><li>Rules + Skills reduce waste with compact persistent context</li><li>Full spec PDF every prompt = token burn — extract key rules instead</li><li>Well-prepared first shot saves more than multiple correction rounds</li></ul></div>
+      <div class="ta-cell reveal reveal-d3"><div class="ta-tag" style="color:var(--tx2)">→ RECOMMENDATION</div><h3>For Teams</h3><ul><li>Configure Rules, Skills, Sub-agents <em>before</em> the first build</li><li>Use reference screenshots as design input — the agent understands visual language</li><li>Treat AI development as collaboration, not one-shot generation</li><li>For non-web UI: expect more iteration than web projects</li></ul></div>
+    </div>
   </div>
+</section>
 
-  <!-- ═══════ SLIDE 17: ITERACE ═══════ -->
-  <div class="slide" data-index="17">
-    <div class="tag">12 — Iterace</div>
-    <h2>Následná práce</h2>
-    <ul>
-      <li>Zakroužkování problémů na screenshotu → agent opraví</li>
-      <li>Nebo: „najdi nedostatky sám a oprav je"</li>
-      <li>Postupné přibližování k předloze</li>
-    </ul>
+<footer class="site-footer">
+  <div class="container">
+    <p style="margin-bottom:.4rem"><a href="https://github.com/lukasmoravansky/2D_Bin_Packing_pyqt" target="_blank" rel="noopener">github.com/lukasmoravansky/2D_Bin_Packing_pyqt</a></p>
+    <p>Built with Cursor · Presented with Claude · 2026</p>
   </div>
-
-  <!-- ═══════ SLIDE 18: ZÁVĚR ═══════ -->
-  <div class="slide title-slide" data-index="18">
-    <div class="tag">13 — Závěr</div>
-    <h2>Nakonec</h2>
-    <p style="font-size:1.1rem; color:#aaa; max-width:600px; line-height:1.6;">
-      Přidán <span class="highlight">genetický algoritmus</span> jako druhý solver<br>
-      → demonstrace modulárnosti projektu
-    </p>
-    <p class="author" style="margin-top:3rem;">Děkuji za pozornost</p>
-  </div>
-
-</div>
-
-<!-- ── NAV ── -->
-<div class="nav">
-  <button class="nav-btn" id="prev">←</button>
-  <div class="nav-dots" id="dots"></div>
-  <button class="nav-btn" id="next">→</button>
-</div>
+</footer>
 
 <script>
-  const slides = document.querySelectorAll('.slide');
-  const dotsContainer = document.getElementById('dots');
-  const counter = document.getElementById('counter');
-  let current = 0;
+var obs=new IntersectionObserver(function(e){e.forEach(function(x){if(x.isIntersecting)x.target.classList.add('visible')})},{threshold:.12,rootMargin:'0px 0px -30px 0px'});
+document.querySelectorAll('.reveal').forEach(function(el){obs.observe(el)});
 
-  // create dots
-  slides.forEach((_, i) => {
-    const d = document.createElement('div');
-    d.className = 'nav-dot' + (i === 0 ? ' active' : '');
-    d.addEventListener('click', () => goTo(i));
-    dotsContainer.appendChild(d);
-  });
+(function(){
+  var c=document.getElementById('heroCanvas');if(!c)return;
+  var grid=c.querySelector('.pc-grid');
+  var boxes=[{w:22,h:16,bg:'rgba(215,25,33,.18)',bd:'rgba(215,25,33,.35)'},{w:18,h:12,bg:'rgba(74,158,255,.14)',bd:'rgba(74,158,255,.28)'},{w:14,h:14,bg:'rgba(0,255,136,.12)',bd:'rgba(0,255,136,.25)'},{w:26,h:10,bg:'rgba(255,204,0,.12)',bd:'rgba(255,204,0,.25)'},{w:10,h:20,bg:'rgba(180,100,255,.14)',bd:'rgba(180,100,255,.28)'},{w:16,h:10,bg:'rgba(215,25,33,.14)',bd:'rgba(215,25,33,.28)'},{w:12,h:18,bg:'rgba(74,158,255,.1)',bd:'rgba(74,158,255,.22)'},{w:20,h:14,bg:'rgba(0,255,136,.1)',bd:'rgba(0,255,136,.22)'},{w:14,h:8,bg:'rgba(255,204,0,.1)',bd:'rgba(255,204,0,.22)'},{w:8,h:12,bg:'rgba(180,100,255,.1)',bd:'rgba(180,100,255,.22)'},{w:18,h:8,bg:'rgba(215,25,33,.1)',bd:'rgba(215,25,33,.22)'},{w:10,h:10,bg:'rgba(74,158,255,.1)',bd:'rgba(74,158,255,.22)'}];
+  var PW=100,PH=100,gap=1.5,placed=[],cx=0,cy=0,rh=0;
+  boxes.forEach(function(b){if(cx+b.w>PW){cx=0;cy+=rh+gap;rh=0}if(cy+b.h<=PH){placed.push({x:cx,y:cy,w:b.w,h:b.h,bg:b.bg,bd:b.bd});cx+=b.w+gap;rh=Math.max(rh,b.h)}});
+  var area=PW*PH,used=placed.reduce(function(s,b){return s+b.w*b.h},0);
+  document.getElementById('heroUtil').textContent=Math.round(used/area*100)+'%';
+  document.getElementById('heroPlaced').textContent=placed.length+'/'+boxes.length;
+  function render(){var gw=grid.offsetWidth,gh=grid.offsetHeight,gl=grid.offsetLeft,gt=grid.offsetTop;
+    placed.forEach(function(b,i){var el=document.createElement('div');el.className='pc-box';el.style.cssText='left:'+(gl+b.x/PW*gw)+'px;top:'+(gt+b.y/PH*gh)+'px;width:'+(b.w/PW*gw)+'px;height:'+(b.h/PH*gh)+'px;background:'+b.bg+';border:1px solid '+b.bd;c.appendChild(el);setTimeout(function(){el.style.transition='opacity .4s ease';el.classList.add('placed')},400+i*120)});
+    setTimeout(function(){document.getElementById('heroStatus').textContent='COMPLETE'},400+placed.length*120+200)}
+  if(document.readyState==='complete')render();else window.addEventListener('load',render)
+})();
 
-  function goTo(n) {
-    if (n < 0 || n >= slides.length) return;
-    slides[current].classList.remove('active');
-    dotsContainer.children[current].classList.remove('active');
-    current = n;
-    slides[current].classList.add('active');
-    dotsContainer.children[current].classList.add('active');
-    counter.textContent = (current + 1) + ' / ' + slides.length;
-  }
+(function(){
+  var area=document.getElementById('demoArea');if(!area)return;
+  var defs=[{pw:30,ph:20,bg:'rgba(215,25,33,.22)',bd:'rgba(215,25,33,.4)'},{pw:20,ph:25,bg:'rgba(74,158,255,.18)',bd:'rgba(74,158,255,.35)'},{pw:25,ph:15,bg:'rgba(0,255,136,.18)',bd:'rgba(0,255,136,.35)'},{pw:15,ph:15,bg:'rgba(255,204,0,.18)',bd:'rgba(255,204,0,.35)'},{pw:18,ph:12,bg:'rgba(180,100,255,.18)',bd:'rgba(180,100,255,.35)'},{pw:12,ph:18,bg:'rgba(215,25,33,.15)',bd:'rgba(215,25,33,.3)'}];
+  var items=[];
+  function build(){items.forEach(function(i){i.el.remove()});items=[];var aw=area.offsetWidth,ah=area.offsetHeight,pad=6;
+    defs.forEach(function(d,i){var el=document.createElement('div');el.className='da-box';var w=d.pw/100*(aw-pad*2),h=d.ph/100*(ah-pad*2);el.style.cssText='width:'+w+'px;height:'+h+'px;background:'+d.bg+';border:1px solid '+d.bd+';left:'+(aw-w-4)+'px;top:'+(pad+i*14)+'px';el.textContent=d.pw+'x'+d.ph;area.appendChild(el);items.push({el:el,def:d,placed:false})});drag();stats()}
+  function drag(){items.forEach(function(item){var sx,sy,ox,oy;
+    function down(e){e.preventDefault();var ev=e.touches?e.touches[0]:e;sx=ev.clientX;sy=ev.clientY;ox=parseFloat(item.el.style.left);oy=parseFloat(item.el.style.top);item.el.classList.add('dragging');document.addEventListener('mousemove',move);document.addEventListener('mouseup',up);document.addEventListener('touchmove',move,{passive:false});document.addEventListener('touchend',up)}
+    function move(e){e.preventDefault();var ev=e.touches?e.touches[0]:e;item.el.style.left=(ox+ev.clientX-sx)+'px';item.el.style.top=(oy+ev.clientY-sy)+'px'}
+    function up(){item.el.classList.remove('dragging');document.removeEventListener('mousemove',move);document.removeEventListener('mouseup',up);document.removeEventListener('touchmove',move);document.removeEventListener('touchend',up);var bx=parseFloat(item.el.style.left),by=parseFloat(item.el.style.top),bw=item.el.offsetWidth,bh=item.el.offsetHeight,pad=6;item.placed=bx>=pad-5&&by>=pad-5&&bx+bw<=area.offsetWidth-pad+5&&by+bh<=area.offsetHeight-pad+5;stats()}
+    item.el.addEventListener('mousedown',down);item.el.addEventListener('touchstart',down,{passive:false})})}
+  function stats(){var n=items.filter(function(i){return i.placed}).length;var pad=6,pa=(area.offsetWidth-pad*2)*(area.offsetHeight-pad*2);var ua=items.filter(function(i){return i.placed}).reduce(function(s,i){return s+i.el.offsetWidth*i.el.offsetHeight},0);document.getElementById('demoPlaced').textContent=n+'/'+defs.length;document.getElementById('demoUtil').textContent=(pa>0?Math.round(ua/pa*100):0)+'%'}
+  document.getElementById('demoReset').addEventListener('click',build);setTimeout(build,400)
+})();
 
-  document.getElementById('prev').addEventListener('click', () => goTo(current - 1));
-  document.getElementById('next').addEventListener('click', () => goTo(current + 1));
+(function(){
+  var s=document.getElementById('baSlider'),a=document.getElementById('baAfter'),h=document.getElementById('baHandle');if(!s||!a||!h)return;
+  var pos=50,dragging=false;set(pos);
+  function set(p){pos=Math.max(3,Math.min(97,p));a.style.width=(100-pos)+'%';a.style.left=pos+'%';h.style.left=pos+'%'}
+  s.addEventListener('mousedown',function(){dragging=true});s.addEventListener('touchstart',function(){dragging=true},{passive:true});
+  document.addEventListener('mousemove',function(e){if(dragging){var r=s.getBoundingClientRect();set((e.clientX-r.left)/r.width*100)}});
+  document.addEventListener('touchmove',function(e){if(dragging){var r=s.getBoundingClientRect();set((e.touches[0].clientX-r.left)/r.width*100)}},{passive:true});
+  document.addEventListener('mouseup',function(){dragging=false});document.addEventListener('touchend',function(){dragging=false})
+})();
 
-  // ── interactive reveal states ──
-  const revealStates = {};
-
-  function handleReveal() {
-    // SLIDE 4: Sponsor
-    if (current === 4) {
-      if (!revealStates[4]) revealStates[4] = 0;
-      revealStates[4]++;
-      const step = revealStates[4];
-      if (step === 1) {
-        document.getElementById('sponsor-reveal').style.opacity = '1';
-        document.getElementById('sponsor-reveal').style.transform = 'translateY(0)';
-      } else if (step === 2) {
-        document.getElementById('sponsor-details').style.opacity = '1';
-        document.getElementById('sponsor-details').style.transform = 'translateY(0)';
-        document.getElementById('sponsor-hint').textContent = 'ještě jednou…';
-      } else if (step === 3) {
-        document.getElementById('price-strike').style.display = 'flex';
-        setTimeout(() => {
-          document.getElementById('price-real').style.display = 'block';
-          document.getElementById('price-real').style.animation = 'fadeUp 0.5s ease forwards';
-        }, 400);
-        document.getElementById('sponsor-hint').style.opacity = '0';
-      } else {
-        goTo(current + 1);
-      }
-      return true;
-    }
-    // SLIDE 9: Result
-    if (current === 9) {
-      if (!revealStates[9]) revealStates[9] = 0;
-      revealStates[9]++;
-      const step = revealStates[9];
-      if (step === 1) {
-        document.getElementById('result-ugly').style.opacity = '1';
-        document.getElementById('result-img').style.opacity = '1';
-        document.getElementById('result-hint').style.opacity = '0';
-      } else {
-        goTo(current + 1);
-      }
-      return true;
-    }
-    // SLIDE 11: Plot twist
-    if (current === 11) {
-      if (!revealStates[11]) revealStates[11] = 0;
-      revealStates[11]++;
-      const step = revealStates[11];
-      if (step === 1) {
-        document.getElementById('twist-step1').style.opacity = '1';
-        document.getElementById('twist-step1').style.transform = 'translateY(0)';
-        document.getElementById('twist-hint').textContent = 'ještě jednou…';
-      } else if (step === 2) {
-        document.getElementById('twist-step2').style.opacity = '1';
-        document.getElementById('twist-step2').style.transform = 'translateY(0)';
-        document.getElementById('twist-hint').textContent = '';
-      } else if (step === 3) {
-        document.getElementById('twist-step3').style.opacity = '1';
-        document.getElementById('twist-hint').style.opacity = '0';
-      } else {
-        goTo(current + 1);
-      }
-      return true;
-    }
-    return false;
-  }
-
-  document.addEventListener('keydown', e => {
-    if (e.key === ' ') {
-      e.preventDefault();
-      if (!handleReveal()) goTo(current + 1);
-      return;
-    }
-    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-      if (!handleReveal()) goTo(current + 1);
-    }
-    if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') goTo(current - 1);
-  });
-
-  goTo(0);
+(function(){
+  var data={prompt:{t:'YOUR PROMPT',p:'Every interaction starts with a natural language request. The clearer the prompt, the better the output. For the first shot, include architecture decisions and design references.'},agent:{t:'MAIN AGENT',p:'Reads your Rules and Skills before every action. Plans changes, creates modules, applies styling — all following persistent instructions. A developer who always checks guidelines first.'},code:{t:'CODE OUTPUT',p:'Generates and modifies Python files, PyQt widgets, stylesheets, project structure. Creates modules from scratch or makes targeted edits. Changes shown as reviewable diffs.'},subagent:{t:'SUB-AGENT REVIEW',p:'The "senior-product-ui-critic" evaluates generated UI against 10 criteria: layout hierarchy, spacing rhythm, alignment, density, consistency, visual authority, color behavior, industrial feel, screenshot DNA, brutal honesty.'},feedback:{t:'SCREENSHOT FEEDBACK',p:'Since PyQt has no browser preview, a screenshot of the running app is pasted back into conversation. Agent and sub-agent see what the UI looks like and suggest improvements. You can circle problem areas directly.'}};
+  var det=document.getElementById('wfDetail');
+  document.querySelectorAll('.wf-node').forEach(function(n){n.addEventListener('click',function(){var d=data[n.dataset.wf];if(!d)return;document.querySelectorAll('.wf-node').forEach(function(nn){nn.classList.remove('active')});n.classList.add('active');det.innerHTML='<h4>'+d.t+'</h4><p>'+d.p+'</p>';det.classList.remove('show');void det.offsetWidth;det.classList.add('show')})})
+})();
 </script>
-
 </body>
 </html>
