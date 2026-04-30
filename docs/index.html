@@ -166,7 +166,7 @@ p,li{font-family:var(--mono);font-size:.82rem;line-height:1.8;color:var(--tx2)}
 .ba-handle{position:absolute;top:0;bottom:0;width:2px;background:var(--ac);z-index:5;pointer-events:none}
 .ba-handle::before{content:'\25C2 \25B8';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:32px;height:32px;background:var(--ac);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.55rem;color:#fff;letter-spacing:.15em}
 .ba-tag{position:absolute;top:8px;font-size:.55rem;letter-spacing:.12em;text-transform:uppercase;padding:.2rem .5rem;background:rgba(0,0,0,.85);border:1px solid var(--bd);border-radius:1px;color:var(--tx3);z-index:6;pointer-events:none}
-.ba-tag-l{left:8px;color:var(--tx)}.ba-tag-r{right:8px}
+.ba-tag-l{left:8px;color:var(--tx)}.ba-tag-r{right:8px;color:var(--tx)}
 
 /* RESULTS */
 .result-img{position:relative;margin:2.5rem 0;border:1px solid var(--bd);border-radius:2px;overflow:visible}
@@ -572,15 +572,10 @@ p,li{font-family:var(--mono);font-size:.82rem;line-height:1.8;color:var(--tx2)}
       <div class="tl-item reveal"><div class="tl-tag">Iteration</div><h3>Gradual redesign with references</h3><p>Fed award-winning web designs as visual references. Screenshots as feedback. Incremental improvement, but hitting limits without proper agent configuration.</p><div class="tl-img zoomable-figure"><button type="button" class="zoomable-trigger js-zoom-open" aria-haspopup="dialog" aria-expanded="false" data-lightbox-src="old_gui_visual_fixed.png" data-lightbox-alt="Iterated 2D palletization GUI — cleaner layout after reference-driven redesign" aria-label="Open enlarged screenshot: iterated GUI layout"><img src="old_gui_visual_fixed.png" alt="" draggable="false"><span class="zoomable-hint" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg> Tap or click to enlarge</span></button></div></div>
       <div class="tl-item tl-key reveal"><div class="tl-tag">Mid-project — Composer 2</div><h3>New model, decision to restart</h3><p>Cursor shipped Composer 2 mid-development. Rather than continuing with the old model, I restarted with proper preparation — Skills, Sub-agents, and Rules configured before the first prompt.</p></div>
       <div class="tl-item reveal"><div class="tl-tag">Attempt 2</div><h3>Prepared agent, dramatically better</h3><p>Sub-agent analyzed a design reference screenshot. Skill guided PyQt styling. The second first-shot produced a significantly better interface. Solver added in prompt #2.</p>
-        <div class="ba-slider" id="baSlider"><img src="old_gui_first_run.png" alt="Before"><div class="ba-after" id="baAfter"><img src="new_gui_first_shot.png" alt="After — redesigned 2D palletization GUI (prepared-agent first shot)"></div><div class="ba-handle" id="baHandle"></div><div class="ba-tag ba-tag-l">BEFORE</div><div class="ba-tag ba-tag-r">AFTER</div></div>
+        <div class="ba-slider" id="baSlider"><img src="old_gui_first_run.png" alt="Before" draggable="false"><div class="ba-after" id="baAfter"><img src="new_gui_first_shot.png" alt="After — redesigned 2D palletization GUI (prepared-agent first shot)" draggable="false"></div><div class="ba-handle" id="baHandle"></div><div class="ba-tag ba-tag-l">BEFORE</div><div class="ba-tag ba-tag-r">AFTER</div></div>
         <div class="ba-mobile-stack">
-          <div class="ba-mobile-item"><span class="ba-tag ba-tag-l">BEFORE</span><img src="old_gui_first_run.png" alt="Before — early GUI"></div>
-          <div class="ba-mobile-item"><span class="ba-tag">AFTER</span><img src="new_gui_first_shot.png" alt="After — redesigned 2D palletization GUI (prepared-agent first shot)"></div>
-        </div>
-        <div class="ba-zoom-row" role="group" aria-label="Full-size screenshots">
-          <button type="button" class="zoomable-text-btn js-zoom-open" aria-haspopup="dialog" aria-expanded="false" data-lightbox-src="old_gui_first_run.png" data-lightbox-alt="Early 2D palletization GUI — functional solver, minimal styling (before)" aria-label="Open full-size before screenshot">Before — full size</button>
-          <button type="button" class="zoomable-text-btn js-zoom-open" aria-haspopup="dialog" aria-expanded="false" data-lightbox-src="new_gui_first_shot.png" data-lightbox-alt="Redesigned 2D palletization GUI — prepared-agent first shot (after)" aria-label="Open full-size after screenshot">After — full size</button>
-          <button type="button" class="zoomable-text-btn js-zoom-pair-open" data-lightbox-before-src="old_gui_first_run.png" data-lightbox-after-src="new_gui_first_shot.png" data-lightbox-before-alt="Before — early GUI" data-lightbox-after-alt="After — redesigned GUI (first shot)" aria-label="Open before and after screenshots side by side at full size">Before + after — scroll view</button>
+          <div class="ba-mobile-item"><span class="ba-tag ba-tag-l">BEFORE</span><button type="button" class="zoomable-trigger js-zoom-open" aria-haspopup="dialog" aria-expanded="false" data-lightbox-src="old_gui_first_run.png" data-lightbox-alt="Before — early GUI" aria-label="Open enlarged screenshot: before"><img src="old_gui_first_run.png" alt="Before — early GUI" draggable="false"></button></div>
+          <div class="ba-mobile-item"><span class="ba-tag ba-tag-r">AFTER</span><button type="button" class="zoomable-trigger js-zoom-open" aria-haspopup="dialog" aria-expanded="false" data-lightbox-src="new_gui_first_shot.png" data-lightbox-alt="After — redesigned 2D palletization GUI (prepared-agent first shot)" aria-label="Open enlarged screenshot: after"><img src="new_gui_first_shot.png" alt="After — redesigned 2D palletization GUI (prepared-agent first shot)" draggable="false"></button></div>
         </div>
       </div>
       <div class="tl-item reveal"><div class="tl-tag">Polish</div><h3>Iterative fixes and self-critique</h3><p>Circled visual issues on screenshots. Asked the agent to find and fix flaws autonomously. Sub-agent caught spacing, alignment, and hierarchy issues I would have missed.</p></div>
@@ -1058,7 +1053,7 @@ p,li{font-family:var(--mono);font-size:.82rem;line-height:1.8;color:var(--tx2)}
   var s=document.getElementById('baSlider'),a=document.getElementById('baAfter'),h=document.getElementById('baHandle');if(!s||!a||!h)return;
   var pos=50,dragging=false;set(pos);
   function set(p){pos=Math.max(3,Math.min(97,p));a.style.clipPath='inset(0 0 0 '+pos+'%)';h.style.left=pos+'%'}
-  s.addEventListener('mousedown',function(e){dragging=true;var r=s.getBoundingClientRect();set((e.clientX-r.left)/r.width*100)});
+  s.addEventListener('mousedown',function(e){e.preventDefault();dragging=true;var r=s.getBoundingClientRect();set((e.clientX-r.left)/r.width*100)});
   s.addEventListener('touchstart',function(e){dragging=true;var r=s.getBoundingClientRect();set((e.touches[0].clientX-r.left)/r.width*100)},{passive:true});
   document.addEventListener('mousemove',function(e){if(dragging){var r=s.getBoundingClientRect();set((e.clientX-r.left)/r.width*100)}});
   document.addEventListener('touchmove',function(e){if(dragging){var r=s.getBoundingClientRect();set((e.touches[0].clientX-r.left)/r.width*100)}},{passive:true});
