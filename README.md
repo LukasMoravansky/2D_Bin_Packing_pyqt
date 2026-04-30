@@ -2,6 +2,8 @@
 
 Desktop application for **2D single-bin / pallet packing** with a modular **GUI** (`App/`) and **algorithmic core** (`src/`). Targets industrial-style benchmarks: validation, logging, reproducible setup, and tests.
 
+**[→ Interactive case study presentation](https://lukasmoravansky.github.io/2D_Bin_Packing_pyqt/)** — the full story of building this with Cursor: workflow, challenges, results.
+
 ## Benchmark Context (Personal Note)
 
 This repository was built as part of an internal R&D benchmark at [JIC](https://www.jic.cz/cz/), where we compare AI coding tools on the same practical software task.  
