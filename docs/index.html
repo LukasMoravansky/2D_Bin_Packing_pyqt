@@ -172,7 +172,7 @@ p,li{font-family:var(--mono);font-size:.82rem;line-height:1.8;color:var(--tx2)}
 .rs-dot{width:22px;height:22px;border-radius:50%;background:var(--ac);display:flex;align-items:center;justify-content:center;font-size:.55rem;font-weight:700;color:#fff;box-shadow:0 0 0 0 var(--ac-g);animation:hpulse 2.5s ease infinite}
 @keyframes hpulse{0%,100%{box-shadow:0 0 0 0 var(--ac-g)}50%{box-shadow:0 0 0 6px transparent}}
 .rs-tip{position:absolute;top:calc(100% + 6px);left:50%;transform:translateX(-50%) translateY(3px);background:rgba(10,10,10,.95);border:1px solid var(--bd2);border-radius:2px;padding:.6rem .9rem;white-space:nowrap;font-size:.68rem;color:var(--tx2);opacity:0;pointer-events:none;transition:opacity .15s ease,transform .15s ease;z-index:10}
-.rs-hot:hover .rs-tip{opacity:1;transform:translateX(-50%) translateY(0)}
+.rs-hot:hover .rs-tip,.rs-hot.is-open .rs-tip{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
 .rs-tip strong{color:var(--tx);font-weight:600;display:block;margin-bottom:.15rem;font-size:.7rem}
 .rs-zoom-row{display:none;margin-top:.65rem;gap:.5rem;flex-wrap:wrap;align-items:center}
 .result-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--bd);border:1px solid var(--bd);border-radius:2px;overflow:hidden}
@@ -725,7 +725,7 @@ p,li{font-family:var(--mono);font-size:.82rem;line-height:1.8;color:var(--tx2)}
     if(!touchActive||!e.changedTouches||!e.changedTouches.length)return;
     touchActive=false;
     var t=e.changedTouches[0];
-    if(t.target&&t.target.closest&&(t.target.closest('.ba-slider')||t.target.closest('#demoArea')||t.target.closest('.zoomable-trigger')||t.target.closest('.zoomable-text-btn')||t.target.closest('#imgLightbox')))return;
+    if(t.target&&t.target.closest&&(t.target.closest('.ba-slider')||t.target.closest('#demoArea')||t.target.closest('.zoomable-trigger')||t.target.closest('.zoomable-text-btn')||t.target.closest('#imgLightbox')||t.target.closest('.rs-hot')))return;
     if(imgLightboxOpen())return;
     var dx=t.clientX-touchSx;
     var dy=t.clientY-touchSy;
@@ -1056,6 +1056,23 @@ p,li{font-family:var(--mono);font-size:.82rem;line-height:1.8;color:var(--tx2)}
   document.addEventListener('mousemove',function(e){if(dragging){var r=s.getBoundingClientRect();set((e.clientX-r.left)/r.width*100)}});
   document.addEventListener('touchmove',function(e){if(dragging){var r=s.getBoundingClientRect();set((e.touches[0].clientX-r.left)/r.width*100)}},{passive:true});
   document.addEventListener('mouseup',function(){dragging=false});document.addEventListener('touchend',function(){dragging=false})
+})();
+
+(function(){
+  var hots=document.querySelectorAll('.rs-hot');
+  if(!hots.length)return;
+  function closeAll(except){
+    hots.forEach(function(h){if(h!==except)h.classList.remove('is-open')});
+  }
+  hots.forEach(function(h){
+    h.addEventListener('click',function(e){
+      var wasOpen=h.classList.contains('is-open');
+      closeAll(null);
+      if(!wasOpen)h.classList.add('is-open');
+      e.stopPropagation();
+    });
+  });
+  document.addEventListener('click',function(){closeAll(null)});
 })();
 
 </script>
