@@ -156,9 +156,13 @@ p,li{font-family:var(--mono);font-size:.82rem;line-height:1.8;color:var(--tx2)}
 .tl-img{margin-top:1rem;border:1px solid var(--bd);border-radius:2px;overflow:hidden;max-width:700px}
 .tl-img img{width:100%;display:block}
 .ba-slider{position:relative;max-width:800px;margin-top:1.2rem;border:1px solid var(--bd);border-radius:2px;overflow:hidden;cursor:col-resize;user-select:none;touch-action:none}
-.ba-slider img{width:100%;height:auto;display:block}
+.ba-slider img{width:100%;height:auto;display:block;aspect-ratio:16/9;object-fit:cover;background:var(--bg-c)}
 .ba-after{position:absolute;inset:0}
-.ba-after img{width:100%;height:auto;display:block}
+.ba-after img{width:100%;height:auto;display:block;aspect-ratio:16/9;object-fit:cover;background:var(--bg-c)}
+.ba-mobile-stack{display:none;max-width:800px;margin-top:1.2rem;flex-direction:column;gap:.75rem}
+.ba-mobile-item{display:flex;flex-direction:column;gap:.35rem}
+.ba-mobile-item .ba-tag{position:static;display:inline-block;align-self:flex-start}
+.ba-mobile-item img{width:100%;height:auto;display:block;border:1px solid var(--bd)}
 .ba-handle{position:absolute;top:0;bottom:0;width:2px;background:var(--ac);z-index:5;pointer-events:none}
 .ba-handle::before{content:'\25C2 \25B8';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:32px;height:32px;background:var(--ac);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.55rem;color:#fff;letter-spacing:.15em}
 .ba-tag{position:absolute;top:8px;font-size:.55rem;letter-spacing:.12em;text-transform:uppercase;padding:.2rem .5rem;background:rgba(0,0,0,.85);border:1px solid var(--bd);border-radius:1px;color:var(--tx3);z-index:6;pointer-events:none}
@@ -210,7 +214,7 @@ p,li{font-family:var(--mono);font-size:.82rem;line-height:1.8;color:var(--tx2)}
   .wf-card{padding:1.4rem 1.2rem}
   .ctx-warn{padding:1.2rem}
 }
-@media(max-width:600px){.modes-row{grid-template-columns:1fr}section{padding:clamp(3rem,8vw,5rem) 0}.deck>section.slide{padding-left:max(16px,4vw);padding-right:max(16px,4vw)}.rs-tip{white-space:normal;max-width:min(200px,70vw)}}
+@media(max-width:600px){.modes-row{grid-template-columns:1fr}section{padding:clamp(3rem,8vw,5rem) 0}.deck>section.slide{padding-left:max(16px,4vw);padding-right:max(16px,4vw)}.rs-tip{white-space:normal;max-width:min(200px,70vw)}.ba-slider{display:none}.ba-mobile-stack{display:flex}}
 @media(prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}.hero-badge .pulse-dot{animation:none}.rs-dot{animation:none}.deck>section.slide{transition:none}}
 
 /* Zoomable screenshots + lightbox */
@@ -397,7 +401,7 @@ p,li{font-family:var(--mono);font-size:.82rem;line-height:1.8;color:var(--tx2)}
         <line x1="585" y1="51" x2="633" y2="51" stroke="#444" stroke-width="1" marker-end="url(#mh)"/>
         <!-- 6. SCREENSHOT loop back to PROMPT -->
         <path d="M700,87 L700,252 L75,252 L75,89" stroke="#4a9eff" stroke-width="1" fill="none" stroke-dasharray="4,3" marker-end="url(#mh-b)"/>
-        <text x="390" y="246" text-anchor="middle" fill="#4a9eff" font-family="JetBrains Mono,monospace" font-size="7" letter-spacing=".1em">VISUAL FEEDBACK LOOP</text>
+        <text x="390" y="246" text-anchor="middle" fill="#4a9eff" font-family="JetBrains Mono,monospace" font-size="7" letter-spacing=".1em">MANUAL VISUAL FEEDBACK LOOP</text>
 
         <!-- ── NODE: PROMPT ── -->
         <rect x="15" y="15" width="120" height="72" fill="#0a0a0a" stroke="#2a2a2a" stroke-width="1" rx="2"/>
@@ -445,68 +449,94 @@ p,li{font-family:var(--mono);font-size:.82rem;line-height:1.8;color:var(--tx2)}
           <circle cx="0" cy="8.5" r="3"/>
         </g>
         <text x="700" y="54" text-anchor="middle" fill="#4a9eff" font-family="JetBrains Mono,monospace" font-size="8" font-weight="600" letter-spacing=".1em">SCREENSHOT</text>
-        <text x="700" y="66" text-anchor="middle" fill="#2a4a7a" font-family="JetBrains Mono,monospace" font-size="6.5">visual feedback</text>
+        <text x="700" y="66" text-anchor="middle" fill="#2a4a7a" font-family="JetBrains Mono,monospace" font-size="6.5">manual visual feedback</text>
       </svg>
       </div>
       <div class="wf-svg-mobile">
-      <svg class="wf-svg" width="340" height="472" viewBox="0 0 340 472" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Cursor sub-agent workflow diagram (mobile layout)">
+      <svg class="wf-svg" width="340" height="622" viewBox="0 0 340 622" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Cursor sub-agent workflow diagram (mobile layout)">
         <defs>
           <marker id="mw-h" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 Z" fill="#777"/></marker>
           <marker id="mw-r" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 Z" fill="#e02028"/></marker>
           <marker id="mw-g" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 Z" fill="#00dd77"/></marker>
           <marker id="mw-b" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 Z" fill="#5aaaff"/></marker>
         </defs>
-        <!-- Nodes first -->
-        <rect x="20" y="16" width="280" height="72" fill="#0a0a0a" stroke="#2a2a2a" stroke-width="1" rx="2"/>
-        <g transform="translate(148,30)" stroke="#888" stroke-width="1.6" fill="none" stroke-linecap="round">
+
+        <!-- ═══ NODES ═══ -->
+
+        <!-- PROMPT — y=20..92 -->
+        <rect x="20" y="20" width="280" height="72" fill="#0a0a0a" stroke="#2a2a2a" stroke-width="1" rx="2"/>
+        <g transform="translate(148,34)" stroke="#888" stroke-width="1.6" fill="none" stroke-linecap="round">
           <polyline points="0,0 7,5 0,10"/>
           <line x1="10" y1="10" x2="18" y2="10"/>
         </g>
-        <text x="160" y="58" text-anchor="middle" fill="#ccc" font-family="JetBrains Mono,monospace" font-size="13" font-weight="600" letter-spacing=".08em">PROMPT</text>
-        <text x="160" y="76" text-anchor="middle" fill="#777" font-family="JetBrains Mono,monospace" font-size="11">your request</text>
-        <rect x="20" y="104" width="280" height="72" fill="#0d0507" stroke="#d71921" stroke-width="1" rx="2"/>
-        <g transform="translate(148,116)" stroke="#d71921" stroke-width="1.6" fill="none" stroke-linecap="round">
+        <text x="160" y="62" text-anchor="middle" fill="#ccc" font-family="JetBrains Mono,monospace" font-size="13" font-weight="600" letter-spacing=".08em">PROMPT</text>
+        <text x="160" y="80" text-anchor="middle" fill="#777" font-family="JetBrains Mono,monospace" font-size="11">your request</text>
+
+        <!-- AGENT — y=132..204 -->
+        <rect x="20" y="132" width="280" height="72" fill="#0d0507" stroke="#d71921" stroke-width="1" rx="2"/>
+        <g transform="translate(148,144)" stroke="#d71921" stroke-width="1.6" fill="none" stroke-linecap="round">
           <rect x="0" y="0" width="14" height="14" rx="1"/>
           <line x1="4" y1="-3" x2="4" y2="0"/><line x1="10" y1="-3" x2="10" y2="0"/>
           <line x1="4" y1="14" x2="4" y2="17"/><line x1="10" y1="14" x2="10" y2="17"/>
           <line x1="-3" y1="5" x2="0" y2="5"/><line x1="-3" y1="10" x2="0" y2="10"/>
           <line x1="14" y1="5" x2="17" y2="5"/><line x1="14" y1="10" x2="17" y2="10"/>
         </g>
-        <text x="160" y="146" text-anchor="middle" fill="#d71921" font-family="JetBrains Mono,monospace" font-size="13" font-weight="600" letter-spacing=".08em">AGENT</text>
-        <text x="160" y="164" text-anchor="middle" fill="#b06060" font-family="JetBrains Mono,monospace" font-size="11">reads rules + skills</text>
-        <rect x="20" y="206" width="280" height="72" fill="#050d09" stroke="#00ff88" stroke-width="1" rx="2"/>
-        <g transform="translate(148,218)" stroke="#00ff88" stroke-width="1.6" fill="none" stroke-linecap="round">
+        <text x="160" y="174" text-anchor="middle" fill="#d71921" font-family="JetBrains Mono,monospace" font-size="13" font-weight="600" letter-spacing=".08em">AGENT</text>
+        <text x="160" y="192" text-anchor="middle" fill="#b06060" font-family="JetBrains Mono,monospace" font-size="11">reads rules + skills</text>
+
+        <!-- SUB-AGENT — y=272..344 -->
+        <rect x="20" y="272" width="280" height="72" fill="#050d09" stroke="#00ff88" stroke-width="1" rx="2"/>
+        <g transform="translate(148,284)" stroke="#00ff88" stroke-width="1.6" fill="none" stroke-linecap="round">
           <circle cx="7" cy="7" r="7"/>
           <line x1="13" y1="13" x2="19" y2="19"/>
         </g>
-        <text x="160" y="248" text-anchor="middle" fill="#00ff88" font-family="JetBrains Mono,monospace" font-size="13" font-weight="600" letter-spacing=".06em">SUB-AGENT</text>
-        <text x="160" y="266" text-anchor="middle" fill="#40c070" font-family="JetBrains Mono,monospace" font-size="11">reviews &amp; critiques</text>
-        <rect x="20" y="288" width="280" height="72" fill="#0d0507" stroke="#d71921" stroke-width="1" rx="2"/>
-        <g transform="translate(148,300)" stroke="#d71921" stroke-width="1.6" fill="none" stroke-linejoin="round">
+        <text x="160" y="314" text-anchor="middle" fill="#00ff88" font-family="JetBrains Mono,monospace" font-size="13" font-weight="600" letter-spacing=".06em">SUB-AGENT</text>
+        <text x="160" y="332" text-anchor="middle" fill="#40c070" font-family="JetBrains Mono,monospace" font-size="11">reviews &amp; critiques</text>
+
+        <!-- EDITS CODE — y=392..464 -->
+        <rect x="20" y="392" width="280" height="72" fill="#0d0507" stroke="#d71921" stroke-width="1" rx="2"/>
+        <g transform="translate(148,404)" stroke="#d71921" stroke-width="1.6" fill="none" stroke-linejoin="round">
           <polyline points="6,0 0,8 6,16"/>
           <polyline points="18,0 24,8 18,16"/>
         </g>
-        <text x="160" y="330" text-anchor="middle" fill="#d71921" font-family="JetBrains Mono,monospace" font-size="13" font-weight="600" letter-spacing=".06em">EDITS CODE</text>
-        <text x="160" y="348" text-anchor="middle" fill="#b06060" font-family="JetBrains Mono,monospace" font-size="11">direct, no re-prompt</text>
-        <rect x="20" y="370" width="280" height="72" fill="#050810" stroke="#4a9eff" stroke-width="1" rx="2"/>
-        <g transform="translate(148,382)" stroke="#4a9eff" stroke-width="1.6" fill="none" stroke-linejoin="round">
+        <text x="160" y="434" text-anchor="middle" fill="#d71921" font-family="JetBrains Mono,monospace" font-size="13" font-weight="600" letter-spacing=".06em">EDITS CODE</text>
+        <text x="160" y="452" text-anchor="middle" fill="#b06060" font-family="JetBrains Mono,monospace" font-size="11">direct, no re-prompt</text>
+
+        <!-- SCREENSHOT — y=492..564 -->
+        <rect x="20" y="492" width="280" height="72" fill="#050810" stroke="#4a9eff" stroke-width="1" rx="2"/>
+        <g transform="translate(148,504)" stroke="#4a9eff" stroke-width="1.6" fill="none" stroke-linejoin="round">
           <path d="M-10,3 L-10,15 L10,15 L10,3 L7,3 L4,0 L-4,0 L-7,3 Z"/>
           <circle cx="0" cy="9" r="3.5"/>
         </g>
-        <text x="160" y="412" text-anchor="middle" fill="#4a9eff" font-family="JetBrains Mono,monospace" font-size="13" font-weight="600" letter-spacing=".08em">SCREENSHOT</text>
-        <text x="160" y="430" text-anchor="middle" fill="#6a9acf" font-family="JetBrains Mono,monospace" font-size="11">visual feedback</text>
-        <!-- Connectors on top — main spine centered; Agent↔Sub split L/R rails -->
-        <line x1="160" y1="88" x2="160" y2="104" stroke="#888" stroke-width="2.2" stroke-linecap="round" marker-end="url(#mw-h)"/>
-        <line x1="142" y1="176" x2="142" y2="204" stroke="#777" stroke-width="2" stroke-dasharray="5,4" stroke-linecap="round" marker-end="url(#mw-h)"/>
-        <text x="150" y="194" fill="#aaa" font-family="JetBrains Mono,monospace" font-size="10" letter-spacing=".04em"><tspan font-weight="600">↓ </tspan>SPAWNS</text>
-        <line x1="178" y1="206" x2="178" y2="179" stroke="#00cc6a" stroke-width="2" stroke-linecap="round" marker-end="url(#mw-g)"/>
-        <text x="186" y="198" fill="#44dd88" font-family="JetBrains Mono,monospace" font-size="10" letter-spacing=".04em"><tspan font-weight="600">↑ </tspan>CRITIQUE</text>
-        <!-- AGENT applies critique → EDITS CODE (right-side bypass, skips SUB-AGENT) -->
-        <path d="M300 140 L322 140 L322 306 L300 306" stroke="#e02028" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#mw-r)"/>
-        <text transform="translate(329,223) rotate(90)" text-anchor="middle" fill="#ff8a82" font-family="JetBrains Mono,monospace" font-size="8" letter-spacing=".05em">APPLIES CRITIQUE</text>
-        <line x1="160" y1="360" x2="160" y2="370" stroke="#888" stroke-width="2.2" stroke-linecap="round" marker-end="url(#mw-h)"/>
-        <path d="M300 442 L314 442 L314 16 L228 16" stroke="#5aaaff" stroke-width="2" fill="none" stroke-dasharray="6,5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#mw-b)"/>
-        <text x="160" y="462" text-anchor="middle" fill="#78b4ff" font-family="JetBrains Mono,monospace" font-size="10" letter-spacing=".06em">VISUAL FEEDBACK LOOP → PROMPT</text>
+        <text x="160" y="534" text-anchor="middle" fill="#4a9eff" font-family="JetBrains Mono,monospace" font-size="13" font-weight="600" letter-spacing=".08em">SCREENSHOT</text>
+        <text x="160" y="552" text-anchor="middle" fill="#6a9acf" font-family="JetBrains Mono,monospace" font-size="11">manual visual feedback</text>
+
+        <!-- ═══ CONNECTORS ═══ -->
+
+        <!-- 1. PROMPT → AGENT (centre spine) -->
+        <line x1="160" y1="92" x2="160" y2="132" stroke="#888" stroke-width="2.2" stroke-linecap="round" marker-end="url(#mw-h)"/>
+
+        <!-- 2. AGENT → SUB-AGENT  SPAWNS  (left rail, dashed) -->
+        <line x1="138" y1="204" x2="138" y2="272" stroke="#777" stroke-width="2" stroke-dasharray="5,4" stroke-linecap="round" marker-end="url(#mw-h)"/>
+        <text x="129" y="241" text-anchor="end" fill="#aaa" font-family="JetBrains Mono,monospace" font-size="10" letter-spacing=".04em"><tspan font-weight="600">↓ </tspan>SPAWNS</text>
+
+        <!-- 3. SUB-AGENT → AGENT  CRITIQUE  (right rail, solid green) -->
+        <line x1="182" y1="272" x2="182" y2="204" stroke="#00cc6a" stroke-width="2" stroke-linecap="round" marker-end="url(#mw-g)"/>
+        <text x="191" y="241" text-anchor="start" fill="#44dd88" font-family="JetBrains Mono,monospace" font-size="10" letter-spacing=".04em"><tspan font-weight="600">↑ </tspan>CRITIQUE</text>
+
+        <!-- 4. APPLIES CRITIQUE (right-side bypass: AGENT → EDITS CODE, skips SUB-AGENT) -->
+        <path d="M300 168 L322 168 L322 428 L300 428" stroke="#e02028" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#mw-r)"/>
+        <text transform="translate(329,298) rotate(90)" text-anchor="middle" fill="#ff8a82" font-family="JetBrains Mono,monospace" font-size="8" letter-spacing=".05em">APPLIES CRITIQUE</text>
+
+        <!-- 5. EDITS CODE → SCREENSHOT (centre spine) -->
+        <line x1="160" y1="464" x2="160" y2="492" stroke="#888" stroke-width="2.2" stroke-linecap="round" marker-end="url(#mw-h)"/>
+
+        <!-- 7. SCREENSHOT → PROMPT (visual feedback loop — left side, enters PROMPT from top-centre) -->
+        <path d="M160 564 L160 582 L8 582 L8 10 L160 10 L160 20" stroke="#5aaaff" stroke-width="2" fill="none" stroke-dasharray="6,5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#mw-b)"/>
+        <text text-anchor="middle" fill="#78b4ff" font-family="JetBrains Mono,monospace" font-size="10" letter-spacing=".06em">
+          <tspan x="84" y="595">MANUAL VISUAL</tspan>
+          <tspan x="84" dy="14">FEEDBACK LOOP</tspan>
+        </text>
       </svg>
       </div>
     </div>
@@ -542,7 +572,11 @@ p,li{font-family:var(--mono);font-size:.82rem;line-height:1.8;color:var(--tx2)}
       <div class="tl-item reveal"><div class="tl-tag">Iteration</div><h3>Gradual redesign with references</h3><p>Fed award-winning web designs as visual references. Screenshots as feedback. Incremental improvement, but hitting limits without proper agent configuration.</p><div class="tl-img zoomable-figure"><button type="button" class="zoomable-trigger js-zoom-open" aria-haspopup="dialog" aria-expanded="false" data-lightbox-src="old_gui_visual_fixed.png" data-lightbox-alt="Iterated 2D palletization GUI — cleaner layout after reference-driven redesign" aria-label="Open enlarged screenshot: iterated GUI layout"><img src="old_gui_visual_fixed.png" alt="" draggable="false"><span class="zoomable-hint" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg> Tap or click to enlarge</span></button></div></div>
       <div class="tl-item tl-key reveal"><div class="tl-tag">Mid-project — Composer 2</div><h3>New model, decision to restart</h3><p>Cursor shipped Composer 2 mid-development. Rather than continuing with the old model, I restarted with proper preparation — Skills, Sub-agents, and Rules configured before the first prompt.</p></div>
       <div class="tl-item reveal"><div class="tl-tag">Attempt 2</div><h3>Prepared agent, dramatically better</h3><p>Sub-agent analyzed a design reference screenshot. Skill guided PyQt styling. The second first-shot produced a significantly better interface. Solver added in prompt #2.</p>
-        <div class="ba-slider" id="baSlider"><img src="old_gui_first_run.png" alt="Before" style="min-height:250px;background:var(--bg-c)"><div class="ba-after" id="baAfter"><img src="new_gui_first_shot.png" alt="After — redesigned 2D palletization GUI (prepared-agent first shot)" style="min-height:250px;background:var(--bg-c)"></div><div class="ba-handle" id="baHandle"></div><div class="ba-tag ba-tag-l">BEFORE</div><div class="ba-tag ba-tag-r">AFTER</div></div>
+        <div class="ba-slider" id="baSlider"><img src="old_gui_first_run.png" alt="Before"><div class="ba-after" id="baAfter"><img src="new_gui_first_shot.png" alt="After — redesigned 2D palletization GUI (prepared-agent first shot)"></div><div class="ba-handle" id="baHandle"></div><div class="ba-tag ba-tag-l">BEFORE</div><div class="ba-tag ba-tag-r">AFTER</div></div>
+        <div class="ba-mobile-stack">
+          <div class="ba-mobile-item"><span class="ba-tag ba-tag-l">BEFORE</span><img src="old_gui_first_run.png" alt="Before — early GUI"></div>
+          <div class="ba-mobile-item"><span class="ba-tag">AFTER</span><img src="new_gui_first_shot.png" alt="After — redesigned 2D palletization GUI (prepared-agent first shot)"></div>
+        </div>
         <div class="ba-zoom-row" role="group" aria-label="Full-size screenshots">
           <button type="button" class="zoomable-text-btn js-zoom-open" aria-haspopup="dialog" aria-expanded="false" data-lightbox-src="old_gui_first_run.png" data-lightbox-alt="Early 2D palletization GUI — functional solver, minimal styling (before)" aria-label="Open full-size before screenshot">Before — full size</button>
           <button type="button" class="zoomable-text-btn js-zoom-open" aria-haspopup="dialog" aria-expanded="false" data-lightbox-src="new_gui_first_shot.png" data-lightbox-alt="Redesigned 2D palletization GUI — prepared-agent first shot (after)" aria-label="Open full-size after screenshot">After — full size</button>
