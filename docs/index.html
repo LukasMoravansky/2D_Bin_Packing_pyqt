@@ -136,10 +136,18 @@ p,li{font-family:var(--mono);font-size:.82rem;line-height:1.8;color:var(--tx2)}
 .ctx-warn strong{color:var(--tx)}
 
 /* PROCESS */
-.modes-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--bd);border:1px solid var(--bd);border-radius:2px;overflow:hidden;margin:2rem 0}
-.mode-cell{background:var(--bg-c);padding:1.3rem}
-.mode-cell .mc-name{font-size:.72rem;font-weight:600;color:var(--tx);margin-bottom:.3rem}
-.mode-cell p{font-size:.72rem}
+:root{--ask-c:#3dd68c;--plan-c:#f97316;--agent-c:#8b8f96;--debug-c:#e5534b}
+.modes-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;background:transparent;border:none;border-radius:0;overflow:visible;margin:2rem 0}
+.mode-cell{background:#0c0c0c;border:1px solid #1c1c1c;border-radius:10px;padding:1.4rem 1.2rem;display:flex;flex-direction:column;gap:.5rem;transition:border-color .25s ease,transform .25s ease,box-shadow .25s ease;position:relative;overflow:hidden}
+.mode-cell::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;border-radius:0 0 10px 10px;opacity:0;transition:opacity .3s ease}
+.mode-cell:hover{transform:translateY(-3px)}
+.mc-ask{--mc:var(--ask-c);--mc-bg:rgba(61,214,140,.08)}.mc-plan{--mc:var(--plan-c);--mc-bg:rgba(249,115,22,.08)}.mc-agent{--mc:var(--agent-c);--mc-bg:rgba(139,143,150,.08)}.mc-debug{--mc:var(--debug-c);--mc-bg:rgba(229,83,75,.08)}
+.mode-cell:hover{border-color:color-mix(in srgb,var(--mc) 40%,transparent);box-shadow:0 8px 24px color-mix(in srgb,var(--mc) 10%,transparent)}
+.mode-cell:hover::after{opacity:1;background:var(--mc)}
+.mc-icon-wrap{width:34px;height:34px;border-radius:8px;background:var(--mc-bg);border:1px solid color-mix(in srgb,var(--mc) 20%,transparent);display:flex;align-items:center;justify-content:center;margin-bottom:.4rem;flex-shrink:0}
+.mc-header{display:flex;align-items:center;gap:.6rem;margin-bottom:.2rem}
+.mc-name{font-size:.75rem;font-weight:600;color:var(--tx);letter-spacing:.01em}
+.mode-cell p{font-size:.67rem;line-height:1.65;color:var(--tx2);margin:0}
 .mode-flow{display:flex;align-items:center;gap:.5rem;margin-bottom:3rem;flex-wrap:wrap}
 .mf-step{font-size:.68rem;font-weight:500;padding:.4rem .9rem;border:1px solid var(--bd);border-radius:2px;color:var(--tx2)}
 .mf-step.active{border-color:var(--ac);color:var(--ac)}
@@ -555,10 +563,56 @@ p,li{font-family:var(--mono);font-size:.82rem;line-height:1.8;color:var(--tx2)}
     <h2 class="reveal">Development Timeline</h2>
     <p class="reveal reveal-d1" style="max-width:650px;margin-top:.5rem;margin-bottom:1rem">Cursor offers four interaction modes. For the initial build: Ask → Plan → Agent (Build) → Iterate.</p>
     <div class="modes-row reveal reveal-d2">
-      <div class="mode-cell"><div class="mc-name">Ask</div><p>Q&A only. Doesn't touch files.</p></div>
-      <div class="mode-cell"><div class="mc-name">Plan</div><p>Architecture, diagrams, rules. Project start.</p></div>
-      <div class="mode-cell"><div class="mc-name">Agent</div><p>Writes, edits, deletes code. Primary tool.</p></div>
-      <div class="mode-cell"><div class="mc-name">Debug</div><p>Targeted error resolution.</p></div>
+      <div class="mode-cell mc-ask">
+        <div class="mc-icon-wrap">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+            <rect x="1.5" y="2" width="15" height="11" rx="2.5" stroke="#3dd68c" stroke-width="1.4"/>
+            <path d="M5 17l1.5-4h5" stroke="#3dd68c" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+            <line x1="5" y1="6.5" x2="13" y2="6.5" stroke="#3dd68c" stroke-width="1.2" stroke-linecap="round" opacity=".5"/>
+            <line x1="5" y1="9.5" x2="10" y2="9.5" stroke="#3dd68c" stroke-width="1.2" stroke-linecap="round" opacity=".5"/>
+          </svg>
+        </div>
+        <div class="mc-header"><div class="mc-name" style="color:#3dd68c">Ask</div></div>
+        <p>Q&A only. Doesn't touch files.</p>
+      </div>
+      <div class="mode-cell mc-plan">
+        <div class="mc-icon-wrap">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+            <circle cx="3.5" cy="5" r="1.3" fill="#f97316"/>
+            <line x1="6.5" y1="5" x2="15" y2="5" stroke="#f97316" stroke-width="1.4" stroke-linecap="round"/>
+            <circle cx="3.5" cy="9" r="1.3" fill="#f97316"/>
+            <line x1="6.5" y1="9" x2="15" y2="9" stroke="#f97316" stroke-width="1.4" stroke-linecap="round"/>
+            <circle cx="3.5" cy="13" r="1.3" fill="#f97316" opacity=".5"/>
+            <line x1="6.5" y1="13" x2="11" y2="13" stroke="#f97316" stroke-width="1.4" stroke-linecap="round" opacity=".5"/>
+          </svg>
+        </div>
+        <div class="mc-header"><div class="mc-name" style="color:#f97316">Plan</div></div>
+        <p>Architecture, diagrams, rules. Project start.</p>
+      </div>
+      <div class="mode-cell mc-agent">
+        <div class="mc-icon-wrap">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+            <path d="M9 9C8.2 7.5 6.8 6 4.8 6C2.7 6 1 7.5 1 9s1.7 3 3.8 3C6.8 12 8.2 10.5 9 9z" stroke="#8b8f96" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M9 9C9.8 10.5 11.2 12 13.2 12C15.3 12 17 10.5 17 9s-1.7-3-3.8-3C11.2 6 9.8 7.5 9 9z" stroke="#8b8f96" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="mc-header"><div class="mc-name" style="color:#8b8f96">Agent</div></div>
+        <p>Writes, edits, deletes code. Primary tool.</p>
+      </div>
+      <div class="mode-cell mc-debug">
+        <div class="mc-icon-wrap">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+            <ellipse cx="9" cy="11" rx="4" ry="5" stroke="#e5534b" stroke-width="1.4"/>
+            <circle cx="9" cy="5.5" r="2" stroke="#e5534b" stroke-width="1.4"/>
+            <path d="M7.2 3.8L5.5 2M10.8 3.8L12.5 2" stroke="#e5534b" stroke-width="1.2" stroke-linecap="round"/>
+            <line x1="9" y1="6" x2="9" y2="16" stroke="#e5534b" stroke-width="1.1" stroke-linecap="round" opacity=".4"/>
+            <path d="M5 8.5L2.5 8M5 11.5L2.5 11.5M5 14L2.5 13.5" stroke="#e5534b" stroke-width="1.1" stroke-linecap="round"/>
+            <path d="M13 8.5L15.5 8M13 11.5L15.5 11.5M13 14L15.5 13.5" stroke="#e5534b" stroke-width="1.1" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="mc-header"><div class="mc-name" style="color:#e5534b">Debug</div></div>
+        <p>Targeted error resolution.</p>
+      </div>
     </div>
     <div class="mode-flow reveal">
       <div class="mf-step">Ask</div><div class="mf-arr">→</div>
