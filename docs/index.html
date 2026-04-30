@@ -174,6 +174,7 @@ p,li{font-family:var(--mono);font-size:.82rem;line-height:1.8;color:var(--tx2)}
 .rs-tip{position:absolute;top:calc(100% + 6px);left:50%;transform:translateX(-50%) translateY(3px);background:rgba(10,10,10,.95);border:1px solid var(--bd2);border-radius:2px;padding:.6rem .9rem;white-space:nowrap;font-size:.68rem;color:var(--tx2);opacity:0;pointer-events:none;transition:opacity .15s ease,transform .15s ease;z-index:10}
 .rs-hot:hover .rs-tip{opacity:1;transform:translateX(-50%) translateY(0)}
 .rs-tip strong{color:var(--tx);font-weight:600;display:block;margin-bottom:.15rem;font-size:.7rem}
+.rs-zoom-row{display:none;margin-top:.65rem;gap:.5rem;flex-wrap:wrap;align-items:center}
 .result-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--bd);border:1px solid var(--bd);border-radius:2px;overflow:hidden}
 .rs-cell{background:var(--bg-c);padding:1.5rem}
 .rs-cell .rs-num{font-family:var(--sans);font-size:1.6rem;font-weight:700;letter-spacing:-.03em;margin-bottom:.2rem}
@@ -230,6 +231,7 @@ p,li{font-family:var(--mono);font-size:.82rem;line-height:1.8;color:var(--tx2)}
 .zoomable-text-btn:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
 @media(max-width:900px){
   .ba-zoom-row{display:flex}
+  .rs-zoom-row{display:flex}
 }
 .img-lightbox{position:fixed;inset:0;z-index:100002;display:flex;align-items:stretch;justify-content:center;padding:0;margin:0;border:none;background:transparent;opacity:0;pointer-events:none;transition:opacity .22s ease}
 .img-lightbox[hidden]{display:none!important;opacity:0}
@@ -561,11 +563,14 @@ p,li{font-family:var(--mono);font-size:.82rem;line-height:1.8;color:var(--tx2)}
       <img src="../images/gui_screenshot.png" alt="Final application — 2D bin packing desktop app">
       <div class="rs-overlay">
         <div class="rs-hot" style="top:5%;left:12%"><div class="rs-dot">1</div><div class="rs-tip"><strong>Pallet Config</strong>Width, height, gap settings</div></div>
-        <div class="rs-hot" style="top:5%;left:28%"><div class="rs-dot">2</div><div class="rs-tip"><strong>Solver Strategy</strong>MaxRects, Skyline, GA MaxRects</div></div>
+        <div class="rs-hot" style="top:17%;left:34%"><div class="rs-dot">2</div><div class="rs-tip"><strong>Solver Strategy</strong>MaxRects, Skyline, GA MaxRects</div></div>
         <div class="rs-hot" style="top:30%;left:14%"><div class="rs-dot">3</div><div class="rs-tip"><strong>Item Types</strong>Dimensions, quantity, rotation</div></div>
         <div class="rs-hot" style="top:13%;left:62%"><div class="rs-dot">4</div><div class="rs-tip"><strong>Visualization</strong>Utilization, placed count, solve time</div></div>
         <div class="rs-hot" style="top:88%;left:28%"><div class="rs-dot">5</div><div class="rs-tip"><strong>System Log</strong>Timestamped INFO/WARN/ERROR</div></div>
       </div>
+    </div>
+    <div class="rs-zoom-row reveal reveal-d3" role="group" aria-label="Full-size final application screenshot">
+      <button type="button" class="zoomable-text-btn js-zoom-open" aria-haspopup="dialog" aria-expanded="false" data-lightbox-src="../images/gui_screenshot.png" data-lightbox-alt="Final application — 2D bin packing desktop app" aria-label="Open full-size final application screenshot">Final app — full size</button>
     </div>
     <div class="result-stats reveal">
       <div class="rs-cell"><div class="rs-num" style="color:var(--grn)">3</div><div class="rs-label">Solver algorithms — MaxRects, Skyline, GA</div></div>
@@ -582,8 +587,8 @@ p,li{font-family:var(--mono);font-size:.82rem;line-height:1.8;color:var(--tx2)}
     <div class="ta-grid">
       <div class="ta-cell reveal"><div class="ta-tag" style="color:var(--grn)">✓ WORKED WELL</div><h3>Strengths</h3><ul><li>Skills + Sub-agents improved quality from the very first prompt</li><li>AI handled design decisions well when given proper reference material</li><li>Screenshot-based feedback loop was effective for desktop GUI</li><li>Restarting with better preparation after Composer 2 paid off significantly</li></ul></div>
       <div class="ta-cell reveal reveal-d1"><div class="ta-tag" style="color:var(--ac)">✗ CHALLENGING</div><h3>Pain Points</h3><ul><li>PyQt5 limited training data — more mistakes than with web tech</li><li>Agent loses project context after ~20 prompts without rules</li><li>No automatic visual feedback for desktop apps (yet)</li><li>Token management requires planning — first shot consumes the most</li></ul></div>
-      <div class="ta-cell reveal reveal-d2"><div class="ta-tag" style="color:var(--blu)">⎇ VERSION CONTROL</div><h3>Commit Before You Prompt</h3><ul><li>Always commit a working state before handing the agent a large task — git checkout beats 30 chat turns of "revert that change"</li><li>When an agent rewrites multiple files at once, undoing via dialogue burns tokens and rarely lands cleanly</li><li>Use a dedicated branch for risky experiments — the agent can iterate freely without touching stable code</li><li>Small frequent checkpoints beat one big commit after everything breaks</li></ul></div>
-      <div class="ta-cell reveal reveal-d3"><div class="ta-tag" style="color:var(--tx2)">→ RECOMMENDATION</div><h3>For Teams</h3><ul><li>Configure Rules, Skills, Sub-agents <em>before</em> the first build</li><li>Use reference screenshots as design input — the agent understands visual language</li><li>Treat AI development as collaboration, not one-shot generation</li><li>For non-web UI: expect more iteration than web projects</li></ul></div>
+      <div class="ta-cell reveal reveal-d2"><div class="ta-tag" style="color:var(--yel)">💡 TOKENS</div><h3>Token Economy</h3><ul><li>Rules + Skills reduce waste with compact persistent context</li><li>Full spec PDF every prompt = token burn — extract key rules instead</li><li>Well-prepared first shot saves more than multiple correction rounds</li></ul></div>
+      <div class="ta-cell reveal reveal-d3"><div class="ta-tag" style="color:var(--tx2)">→ RECOMMENDATION</div><h3>For Teams</h3><ul><li>Configure Rules, Skills, Sub-agents <em>before</em> the first build</li><li>Use reference screenshots as design input — the agent understands visual language</li><li>Treat AI development as collaboration, not one-shot generation</li><li>Save a backup before every large agent task — if the result breaks things, you can restore in seconds instead of spending dozens of messages asking the agent to undo its own work</li></ul></div>
     </div>
   </div>
 </section>
