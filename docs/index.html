@@ -211,6 +211,46 @@ p,li{font-family:var(--mono);font-size:.82rem;line-height:1.8;color:var(--tx2)}
 }
 @media(max-width:600px){.modes-row{grid-template-columns:1fr}section{padding:clamp(3rem,8vw,5rem) 0}.deck>section.slide{padding-left:max(16px,4vw);padding-right:max(16px,4vw)}}
 @media(prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}.hero-badge .pulse-dot{animation:none}.rs-dot{animation:none}.deck>section.slide{transition:none}}
+
+/* Zoomable screenshots + lightbox */
+.zoomable-figure{margin:0;padding:0;border:none;background:none;display:block;width:100%}
+.zoomable-trigger{display:block;width:100%;margin:0;padding:0;border:none;background:transparent;font:inherit;color:inherit;text-align:left;cursor:zoom-in;position:relative;border-radius:inherit;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.zoomable-trigger:focus-visible{outline:2px solid var(--ac);outline-offset:3px}
+.zoomable-trigger img{display:block;width:100%;height:auto;vertical-align:bottom}
+.zoomable-hint{pointer-events:none;position:absolute;bottom:0;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:.4rem;padding:.45rem .6rem;font-family:var(--mono);font-size:.58rem;letter-spacing:.08em;text-transform:uppercase;color:var(--tx2);background:linear-gradient(to top,rgba(0,0,0,.82),transparent);border-radius:0 0 1px 1px;opacity:0;transition:opacity .2s}
+.zoomable-trigger:hover .zoomable-hint,.zoomable-trigger:focus-visible .zoomable-hint{opacity:1}
+@media(hover:none){.zoomable-hint{opacity:.72}}
+.zoomable-hint svg{width:11px;height:11px;flex-shrink:0;opacity:.85}
+.cursor-img .zoomable-trigger{border-radius:2px}
+.tl-img.zoomable-figure{border:none;overflow:visible;max-width:700px}
+.tl-img .zoomable-trigger{border:1px solid var(--bd);border-radius:2px;overflow:hidden;background:var(--bg-c)}
+.ba-zoom-row{display:none;margin-top:.65rem;gap:.5rem;flex-wrap:wrap;align-items:center}
+.zoomable-text-btn{font-family:var(--mono);font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;padding:.45rem .75rem;border:1px solid var(--bd2);border-radius:2px;background:var(--bg-c);color:var(--tx2);cursor:pointer;transition:border-color .2s,color .2s;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.zoomable-text-btn:hover{border-color:var(--bd3);color:var(--tx)}
+.zoomable-text-btn:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+@media(max-width:900px){
+  .ba-zoom-row{display:flex}
+}
+.img-lightbox{position:fixed;inset:0;z-index:100002;display:flex;align-items:stretch;justify-content:center;padding:0;margin:0;border:none;background:transparent;opacity:0;pointer-events:none;transition:opacity .22s ease}
+.img-lightbox[hidden]{display:none!important;opacity:0}
+.img-lightbox.is-open{opacity:1;pointer-events:auto}
+.img-lightbox__backdrop{position:absolute;inset:0;background:rgba(0,0,0,.94);cursor:pointer;border:none;padding:0;margin:0;-webkit-tap-highlight-color:transparent}
+.img-lightbox__inner{position:relative;z-index:2;display:flex;flex-direction:column;max-width:100vw;width:100%;max-height:100vh;margin:auto;padding:clamp(.5rem,2vw,1rem);pointer-events:none}
+.img-lightbox__inner>*{pointer-events:auto}
+.img-lightbox__toolbar{display:flex;justify-content:flex-end;align-items:center;margin-bottom:.35rem;flex-shrink:0}
+.img-lightbox__close{font-family:var(--mono);font-size:1.1rem;line-height:1;min-width:44px;min-height:44px;padding:.5rem;border:1px solid var(--bd2);border-radius:2px;background:rgba(10,10,10,.95);color:var(--tx2);cursor:pointer;transition:border-color .2s,color .2s;-webkit-tap-highlight-color:transparent;touch-action:manipulation;display:inline-flex;align-items:center;justify-content:center}
+.img-lightbox__close:hover{border-color:var(--ac);color:var(--tx)}
+.img-lightbox__close:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.img-lightbox__scroller{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;touch-action:pan-x pan-y pinch-zoom;overflow:hidden}
+.img-lightbox__scroller img{display:block;max-width:100%;max-height:calc(100dvh - 80px);width:auto;height:auto;object-fit:contain;touch-action:pan-x pan-y pinch-zoom;margin:0 auto;border:1px solid var(--bd);border-radius:2px}
+.img-lightbox__pair{display:flex;flex-direction:column;gap:1rem;padding:.75rem;align-items:flex-start}
+@media(min-width:640px){
+  .img-lightbox__pair{flex-direction:row;gap:1.25rem;align-items:flex-start}
+}
+.img-lightbox__pair figure{margin:0;padding:0;border:1px solid var(--bd);border-radius:2px;overflow:hidden;background:var(--bg-c);flex-shrink:0}
+.img-lightbox__pair figcaption{font-family:var(--mono);font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;color:var(--tx3);margin-bottom:.35rem;padding:0 .25rem}
+.img-lightbox__pair img{display:block;vertical-align:bottom;max-width:min(100%,500px);max-height:70dvh;object-fit:contain}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
 </style>
 </head>
 <body>
@@ -289,8 +329,11 @@ p,li{font-family:var(--mono);font-size:.82rem;line-height:1.8;color:var(--tx2)}
       <div class="cg-cell"><div class="cg-num">02</div><h3>Multi-model access</h3><p>Claude, GPT-4, Gemini, or Cursor's own Composer — all within one $20/mo subscription.</p></div>
       <div class="cg-cell"><div class="cg-num">03</div><h3>Agent workflow</h3><p>Beyond autocomplete. Reads your project, plans changes, creates files, iterates in conversation.</p></div>
     </div>
-    <figure class="cursor-img reveal">
-      <img src="cursor_enviroment.png" alt="Cursor IDE — dark UI with file explorer, Python editor, and AI chat panel (VS Code fork)" width="1917" height="1017" loading="lazy" decoding="async">
+    <figure class="cursor-img reveal zoomable-figure">
+      <button type="button" class="zoomable-trigger js-zoom-open" aria-haspopup="dialog" aria-expanded="false" data-lightbox-src="cursor_enviroment.png" data-lightbox-alt="Cursor IDE — dark UI with file explorer, Python editor, and AI chat panel (VS Code fork)" aria-label="Open enlarged screenshot: Cursor IDE environment">
+        <img src="cursor_enviroment.png" alt="" width="1917" height="1017" loading="lazy" decoding="async" draggable="false">
+        <span class="zoomable-hint" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg> Tap or click to enlarge</span>
+      </button>
     </figure>
   </div>
 </section>
@@ -493,11 +536,16 @@ p,li{font-family:var(--mono);font-size:.82rem;line-height:1.8;color:var(--tx2)}
     </div>
     <h3 class="reveal" style="margin-bottom:1.5rem">How it went</h3>
     <div class="timeline">
-      <div class="tl-item reveal"><div class="tl-tag">Attempt 1</div><h3>Functional code, ugly GUI</h3><p>Agent found a solver online and produced working code. Boxes placed correctly. The interface? Zero design thinking.</p><div class="tl-img"><img src="old_gui_first_run.png" alt="Early 2D palletization GUI — functional solver, minimal styling"></div></div>
-      <div class="tl-item reveal"><div class="tl-tag">Iteration</div><h3>Gradual redesign with references</h3><p>Fed award-winning web designs as visual references. Screenshots as feedback. Incremental improvement, but hitting limits without proper agent configuration.</p><div class="tl-img"><img src="old_gui_visual_fixed.png" alt="Iterated 2D palletization GUI — cleaner layout after reference-driven redesign"></div></div>
+      <div class="tl-item reveal"><div class="tl-tag">Attempt 1</div><h3>Functional code, ugly GUI</h3><p>Agent found a solver online and produced working code. Boxes placed correctly. The interface? Zero design thinking.</p><div class="tl-img zoomable-figure"><button type="button" class="zoomable-trigger js-zoom-open" aria-haspopup="dialog" aria-expanded="false" data-lightbox-src="old_gui_first_run.png" data-lightbox-alt="Early 2D palletization GUI — functional solver, minimal styling" aria-label="Open enlarged screenshot: first GUI attempt"><img src="old_gui_first_run.png" alt="" draggable="false"><span class="zoomable-hint" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg> Tap or click to enlarge</span></button></div></div>
+      <div class="tl-item reveal"><div class="tl-tag">Iteration</div><h3>Gradual redesign with references</h3><p>Fed award-winning web designs as visual references. Screenshots as feedback. Incremental improvement, but hitting limits without proper agent configuration.</p><div class="tl-img zoomable-figure"><button type="button" class="zoomable-trigger js-zoom-open" aria-haspopup="dialog" aria-expanded="false" data-lightbox-src="old_gui_visual_fixed.png" data-lightbox-alt="Iterated 2D palletization GUI — cleaner layout after reference-driven redesign" aria-label="Open enlarged screenshot: iterated GUI layout"><img src="old_gui_visual_fixed.png" alt="" draggable="false"><span class="zoomable-hint" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg> Tap or click to enlarge</span></button></div></div>
       <div class="tl-item tl-key reveal"><div class="tl-tag">Mid-project — Composer 2</div><h3>New model, decision to restart</h3><p>Cursor shipped Composer 2 mid-development. Rather than continuing with the old model, I restarted with proper preparation — Skills, Sub-agents, and Rules configured before the first prompt.</p></div>
       <div class="tl-item reveal"><div class="tl-tag">Attempt 2</div><h3>Prepared agent, dramatically better</h3><p>Sub-agent analyzed a design reference screenshot. Skill guided PyQt styling. The second first-shot produced a significantly better interface. Solver added in prompt #2.</p>
         <div class="ba-slider" id="baSlider"><img src="old_gui_first_run.png" alt="Before" style="min-height:250px;background:var(--bg-c)"><div class="ba-after" id="baAfter"><img src="new_gui_first_shot.png" alt="After — redesigned 2D palletization GUI (prepared-agent first shot)" style="min-height:250px;background:var(--bg-c)"></div><div class="ba-handle" id="baHandle"></div><div class="ba-tag ba-tag-l">BEFORE</div><div class="ba-tag ba-tag-r">AFTER</div></div>
+        <div class="ba-zoom-row" role="group" aria-label="Full-size screenshots">
+          <button type="button" class="zoomable-text-btn js-zoom-open" aria-haspopup="dialog" aria-expanded="false" data-lightbox-src="old_gui_first_run.png" data-lightbox-alt="Early 2D palletization GUI — functional solver, minimal styling (before)" aria-label="Open full-size before screenshot">Before — full size</button>
+          <button type="button" class="zoomable-text-btn js-zoom-open" aria-haspopup="dialog" aria-expanded="false" data-lightbox-src="new_gui_first_shot.png" data-lightbox-alt="Redesigned 2D palletization GUI — prepared-agent first shot (after)" aria-label="Open full-size after screenshot">After — full size</button>
+          <button type="button" class="zoomable-text-btn js-zoom-pair-open" data-lightbox-before-src="old_gui_first_run.png" data-lightbox-after-src="new_gui_first_shot.png" data-lightbox-before-alt="Before — early GUI" data-lightbox-after-alt="After — redesigned GUI (first shot)" aria-label="Open before and after screenshots side by side at full size">Before + after — scroll view</button>
+        </div>
       </div>
       <div class="tl-item reveal"><div class="tl-tag">Polish</div><h3>Iterative fixes and self-critique</h3><p>Circled visual issues on screenshots. Asked the agent to find and fix flaws autonomously. Sub-agent caught spacing, alignment, and hierarchy issues I would have missed.</p></div>
     </div>
@@ -547,6 +595,16 @@ p,li{font-family:var(--mono);font-size:.82rem;line-height:1.8;color:var(--tx2)}
   </div>
 </section>
 
+</div>
+
+<div id="imgLightbox" class="img-lightbox" hidden aria-hidden="true">
+  <button type="button" class="img-lightbox__backdrop js-lightbox-dismiss" tabindex="-1" aria-label="Close enlarged view"></button>
+  <div class="img-lightbox__inner" role="dialog" id="imgLightboxDialog" aria-modal="true" aria-label="Enlarged screenshot">
+    <div class="img-lightbox__toolbar">
+      <button type="button" class="img-lightbox__close js-lightbox-close" aria-label="Close enlarged screenshot"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+    </div>
+    <div class="img-lightbox__scroller" id="imgLightboxScroller" tabindex="-1"></div>
+  </div>
 </div>
 
 <div class="nav" role="toolbar" aria-label="Slide navigation">
@@ -604,7 +662,19 @@ p,li{font-family:var(--mono);font-size:.82rem;line-height:1.8;color:var(--tx2)}
   document.getElementById('deckPrev').addEventListener('click',function(){goTo(current-1)});
   document.getElementById('deckNext').addEventListener('click',function(){goTo(current+1)});
 
+  function imgLightboxOpen(){
+    var lb=document.getElementById('imgLightbox');
+    return !!(lb&&!lb.hasAttribute('hidden'));
+  }
   function onKeyDown(e){
+    if(imgLightboxOpen()){
+      if(e.ctrlKey||e.metaKey||e.altKey)return;
+      var lk=e.key;
+      if(lk==='ArrowDown'||lk==='ArrowRight'||lk==='PageDown'||lk==='ArrowUp'||lk==='ArrowLeft'||lk==='PageUp'||lk===' '||lk==='Spacebar'||lk==='Home'||lk==='End'){
+        e.preventDefault();
+      }
+      return;
+    }
     var k=e.key;
     if(e.ctrlKey||e.metaKey||e.altKey)return;
     if(k==='ArrowDown'||k==='ArrowRight'||k==='PageDown'){e.preventDefault();goTo(current+1)}
@@ -621,6 +691,7 @@ p,li{font-family:var(--mono);font-size:.82rem;line-height:1.8;color:var(--tx2)}
     wheelTimer=setTimeout(function(){wheelLocked=false;wheelTimer=null},550);
   }
   deck.addEventListener('wheel',function(e){
+    if(imgLightboxOpen())return;
     var slideEl=slides[current];
     var dy=e.deltaY;
     var tall=slideEl.scrollHeight>slideEl.clientHeight+2;
@@ -649,7 +720,8 @@ p,li{font-family:var(--mono);font-size:.82rem;line-height:1.8;color:var(--tx2)}
     if(!touchActive||!e.changedTouches||!e.changedTouches.length)return;
     touchActive=false;
     var t=e.changedTouches[0];
-    if(t.target&&t.target.closest&&(t.target.closest('.ba-slider')||t.target.closest('#demoArea')))return;
+    if(t.target&&t.target.closest&&(t.target.closest('.ba-slider')||t.target.closest('#demoArea')||t.target.closest('.zoomable-trigger')||t.target.closest('.zoomable-text-btn')||t.target.closest('#imgLightbox')))return;
+    if(imgLightboxOpen())return;
     var dx=t.clientX-touchSx;
     var dy=t.clientY-touchSy;
     var slideEl=slides[current];
@@ -665,6 +737,122 @@ p,li{font-family:var(--mono);font-size:.82rem;line-height:1.8;color:var(--tx2)}
   deck.addEventListener('touchcancel',function(){touchActive=false;},{passive:true});
 
   applyReveals(slides[0]);
+})();
+
+(function(){
+  var lb=document.getElementById('imgLightbox');
+  if(!lb)return;
+  var backdrop=lb.querySelector('.js-lightbox-dismiss');
+  var closeBtn=lb.querySelector('.js-lightbox-close');
+  var dialogEl=document.getElementById('imgLightboxDialog');
+  var scroller=document.getElementById('imgLightboxScroller');
+  var lastTrigger=null;
+  var expandedBtn=null;
+  var lbClosing=false;
+  var closeTimer=null;
+
+  function escAttr(s){
+    return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function closeLb(){
+    if(lb.hasAttribute('hidden')||lbClosing)return;
+    lbClosing=true;
+    lb.classList.remove('is-open');
+    if(closeTimer)clearTimeout(closeTimer);
+    closeTimer=setTimeout(function(){
+      closeTimer=null;
+      lb.setAttribute('hidden','');
+      lb.setAttribute('aria-hidden','true');
+      document.body.style.overflow='';
+      scroller.innerHTML='';
+      if(expandedBtn){expandedBtn.setAttribute('aria-expanded','false');expandedBtn=null}
+      var ref=lastTrigger;
+      lastTrigger=null;
+      lbClosing=false;
+      if(ref&&typeof ref.focus==='function'){
+        try{ref.focus()}catch(_){}
+      }
+    },230);
+  }
+
+  function openLb(html,isPair,fromEl){
+    if(lbClosing)return;
+    lastTrigger=fromEl||document.activeElement;
+    if(expandedBtn){expandedBtn.setAttribute('aria-expanded','false');expandedBtn=null}
+    scroller.innerHTML=html;
+    if(dialogEl){
+      dialogEl.setAttribute('aria-label',isPair?'Before and after — enlarged screenshots':'Enlarged screenshot');
+    }
+    var wasHidden=lb.hasAttribute('hidden');
+    if(wasHidden){lb.classList.remove('is-open')}
+    lb.removeAttribute('hidden');
+    lb.setAttribute('aria-hidden','false');
+    document.body.style.overflow='hidden';
+    if(wasHidden){
+      requestAnimationFrame(function(){
+        lb.classList.add('is-open');
+      });
+    }
+    if(fromEl&&fromEl.classList&&fromEl.classList.contains('js-zoom-open')){
+      expandedBtn=fromEl;
+      fromEl.setAttribute('aria-expanded','true');
+    }
+    closeBtn.focus();
+  }
+
+  function openSingle(btn){
+    var src=btn.getAttribute('data-lightbox-src');
+    var alt=btn.getAttribute('data-lightbox-alt')||'';
+    if(!src)return;
+    openLb('<img src="'+escAttr(src)+'" alt="'+escAttr(alt)+'">',false,btn);
+  }
+
+  function openPair(btn){
+    var bs=btn.getAttribute('data-lightbox-before-src');
+    var as=btn.getAttribute('data-lightbox-after-src');
+    var ba=btn.getAttribute('data-lightbox-before-alt')||'Before';
+    var aa=btn.getAttribute('data-lightbox-after-alt')||'After';
+    if(!bs||!as)return;
+    var html='<div class="img-lightbox__pair">'+
+      '<figure><figcaption>Before</figcaption><img src="'+escAttr(bs)+'" alt="'+escAttr(ba)+'"></figure>'+
+      '<figure><figcaption>After</figcaption><img src="'+escAttr(as)+'" alt="'+escAttr(aa)+'"></figure>'+
+      '</div>';
+    openLb(html,true,btn);
+  }
+
+  document.querySelectorAll('.js-zoom-open').forEach(function(btn){
+    btn.addEventListener('click',function(){openSingle(btn)});
+  });
+  document.querySelectorAll('.js-zoom-pair-open').forEach(function(btn){
+    btn.addEventListener('click',function(){openPair(btn)});
+  });
+
+  backdrop.addEventListener('click',closeLb);
+  closeBtn.addEventListener('click',closeLb);
+
+  lb.addEventListener('keydown',function(e){
+    if(e.key!=='Tab')return;
+    var focusable=lb.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+    var arr=Array.prototype.slice.call(focusable).filter(function(el){
+      return !el.closest('[hidden]')&&el.offsetParent!==null&&el.tabIndex!==-1;
+    });
+    if(!arr.length){e.preventDefault();return}
+    var first=arr[0],last=arr[arr.length-1];
+    if(e.shiftKey){
+      if(document.activeElement===first){e.preventDefault();last.focus()}
+    }else{
+      if(document.activeElement===last){e.preventDefault();first.focus()}
+    }
+  });
+
+  document.addEventListener('keydown',function(e){
+    if(e.key!=='Escape')return;
+    if(lb.hasAttribute('hidden'))return;
+    e.preventDefault();
+    e.stopPropagation();
+    closeLb();
+  },true);
 })();
 
 (function(){
